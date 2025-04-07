@@ -8,3 +8,21 @@ The package aims to reduce repetitive coding, improve workflow efficiency, and m
 As `TranscripTools` is under active development, and new features are being added. Users are welcome to explore, test, and provide feedback.
 
 Open to collaborations to further improve the package!
+
+
+## Installation
+
+### Install from GitHub
+
+To install the development version of **TranscripTools** from GitHub, run:
+
+
+#Install devtools if needed
+`if (!requireNamespace("devtools", quietly = TRUE))`
+  `install.packages("devtools")`
+
+#Install TranscripTools from GitHub
+`devtools::install_github("Francesco-E-Vallone/TranscripTools")`
+
+#Load the package
+`library(TranscripTools)`
