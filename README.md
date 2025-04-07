@@ -26,3 +26,10 @@ To install the development version of **TranscripTools** from GitHub, run:
 
 #Load the package
 `library(TranscripTools)`
+
+
+## Documentation
+
+For full package documentation and examples, visit the website:
+
+[TranscripTools Documentation](https://francesco-e-vallone.github.io/TranscripTools/)
