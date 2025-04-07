@@ -1,11 +1,24 @@
-Package: TranscriptEase
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Package: TranscripTools
+Title: Streamlined RNA-seq Data Manipulation and Analysis
+Version: 0.1.0
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+    person("Francesco Edoardo Vallone", email = "francesco.edo.vallone@gmail.com", role = c("aut", "cre"))
+Description: TranscripTools simplifies RNA-seq analysis with intuitive functions for differential gene expression, visualization, functional enrichment, and PCA. Designed for efficiency and reproducibility, it reduces complex workflows to a few lines of code.
+License: MIT + file LICENSE
 Encoding: UTF-8
+Imports:
+    ggplot2,
+    ComplexHeatmap,
+    dplyr,
+    tidyr,
+    reshape2,
+    ggrepel,
+    PCAtools,
+    enrichR,
+    svglite
+Suggests:
+    roxygen2,
+    knitr,
+    rmarkdown
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
