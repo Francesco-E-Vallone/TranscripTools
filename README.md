@@ -1,6 +1,8 @@
-# TranscriptTools
+<h1 align="center">TranscriptTools</h1>
 
-<img src="Tlogo.png" alt="" width="400"/>
+<p align="center">
+  <img src="Tlogo.png" alt="" width="400"/>
+</p>
 
 `TranscripTools` is an R package designed to streamline bulk RNA-seq analysis by providing convenient functions for commonly used tasks such as PCA, heatmaps, and other exploratory and visualization techniques.
 The package aims to reduce repetitive coding, improve workflow efficiency, and make RNA-seq data exploration more accessible.
