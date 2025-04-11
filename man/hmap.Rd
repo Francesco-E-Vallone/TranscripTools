@@ -12,7 +12,9 @@ hmap(
     "#f6e298", "#db7d54", "#c14536", "#b9332c"),
   top_annotation_df = NULL,
   top_annotation_colors = NULL,
-  annotation_width = unit(c(1, 4), "cm")
+  annotation_width = unit(c(1, 4), "cm"),
+  show_row_names = FALSE,
+  show_column_names = FALSE
 )
 }
 \arguments{
@@ -25,41 +27,51 @@ If \code{NULL} (default), the heatmap will be created using all rows in \code{tm
 
 \item{heatmap_colors}{A character vector specifying the color palette for the heatmap. Default is a blue-to-red gradient.}
 
-\item{top_annotation_df}{An optional data frame for top annotation. For example, this could contain sample groupings.
-If \code{NULL} (default), no top annotation is added unless a global \code{metadata$samples} exists.}
+\item{top_annotation_df}{An optional data frame for top annotation (for example, sample grouping information). If provided,
+it will be used to annotate columns; if \code{NULL} (default) and a global \code{metadata$samples} exists, that will be used.}
 
-\item{top_annotation_colors}{A named list of colors for the annotation. Default is \code{NULL}, meaning no annotation colors are applied.}
+\item{top_annotation_colors}{An optional named list of colors for the annotation. If \code{NULL} (default), the annotation
+will use the default (random) colors.}
 
 \item{annotation_width}{A \code{unit} object specifying the annotation width. Default is \code{unit(c(1, 4), 'cm')}.}
+
+\item{show_row_names}{Logical. Whether to display row (gene) names on the heatmap. Default is \code{FALSE}.}
+
+\item{show_column_names}{Logical. Whether to display column names on the heatmap. Default is \code{FALSE}.}
 }
 \value{
 A \code{Heatmap} object (from the ComplexHeatmap package) that is drawn and returned.
 }
 \description{
-This function generates a heatmap from a count matrix (e.g., TMM or TPM data), with the option to restrict to a set
-of differentially expressed genes (DEGs). In addition, it allows full customization of the heatmap colors and the top annotation.
+This function generates a heatmap from a normalized count matrix (e.g., TMM or TPM data), with the option to restrict
+the visualization to a set of differentially expressed genes (DEGs). In addition, it allows full customization of the heatmap
+colors, the top annotation, and the display of row (gene names) and column names.
 }
 \details{
 The function performs the following steps:
 \itemize{
-\item Optionally subsets the count matrix \code{tmm} to include only rows in \code{deg} (if provided).
+\item Optionally subsets the count matrix \code{tmm} to include only rows with gene names in \code{deg} (if provided).
 \item Computes z-scores for each gene across samples.
-\item Optionally creates a top annotation if both \code{top_annotation_df} and \code{top_annotation_colors} are provided.
-\item Draws a heatmap using the \code{Heatmap} function from the ComplexHeatmap package.
+\item Creates a top annotation if \code{top_annotation_df} is provided. If \code{top_annotation_colors} is also provided,
+it is used; otherwise, default colors are applied.
+\item Draws a heatmap using the \code{Heatmap} function from the ComplexHeatmap package with user-specified options for
+displaying row and column names.
 }
-This flexibility allows users to visualize either the entire dataset or just a subset of DEGs, with full control over aesthetics.
 }
 \examples{
 \dontrun{
 # Example: Create a heatmap using all genes
 ht_all <- hmap(tmm_avg, title = "Heatmap of All Genes")
 
-# Example: Create a heatmap using only a subset of DEGs
+# Example: Create a heatmap using only a subset of DEGs, with custom annotation colors and showing column names:
 deg_genes <- rownames(res_PB_vs_all)
+custom_colors <- list(samples = c("NM_IgM" = "darkred", "NM_NT" = "darkorange", 
+                                  "NWT_IgM" = "darkblue", "NWT_NT" = "lightblue"))
 ht_deg <- hmap(tmm_avg, title = "PB vs ALL - DEGs", deg = deg_genes,
                heatmap_colors = c("#4575b4", "#91bfdb", "#e0f3f8", "#fee090", "#fc8d59", "#d73027"),
-               top_annotation_df = data.frame(Group = metadata$samples),
-               top_annotation_colors = list(Group = c("PB" = "blue", "BM" = "red", "solid_tissues" = "green")))
+               top_annotation_df = data.frame(samples = metadata$samples),
+               top_annotation_colors = custom_colors,
+               show_column_names = TRUE)
 }
 
 }
