@@ -76,36 +76,38 @@ create_df <- function(raw_counts, files) {
 
 #' Select Statistically Significant Differentially Expressed Genes
 #'
-#' This function processes a list of differential gene expression (DGE) results and filters each
-#' data frame to retain only the genes that are statistically significant based on a specified
-#' significance column and log fold-change (logFC) threshold. This is useful for selecting differentially
-#' expressed genes from multiple analyses.
+#' This function processes a named list of differential gene expression (DGE) data frames and filters each
+#' data frame to retain only those genes that are statistically significant based on a specified significance 
+#' column and a log fold-change threshold. This is useful for selecting the most differentially expressed genes 
+#' across multiple analyses.
 #'
-#' @param dge_list A named list of data frames, each containing DGE results. Each data frame is expected
-#'   to have a numeric column for significance (e.g., p-value) and a \code{logFC} column indicating the log fold-change.
-#' @param stat_sign A character string specifying the name of the significance column (e.g., "p.value" or "adj.P.Val")
+#' @param dge_list A named list of data frames, each containing DGE results. Each data frame should have a numeric column 
+#'   for significance (e.g., p-value or adjusted p-value) and a \code{logFC} column indicating the log fold-change.
+#' @param stat_sign A character string specifying the name of the significance column (e.g., `"p.value"` or `"adj.P.Val"`)
 #'   used to determine statistical significance.
-#' @param logFC_threshold A numeric value specifying the threshold for absolute log fold-change.
-#'   Only genes with \code{logFC} greater than or equal to this threshold (or less than or equal to the negative
-#'   of this threshold) will be retained. Default is 1.
+#' @param logFC_threshold A numeric value specifying the threshold for the absolute log fold-change.
+#'   Only genes with \code{logFC} greater than or equal to this threshold (or less than or equal to the negative 
+#'   of this threshold) will be retained. Default is \code{1}.
 #'
-#' @return A named list of data frames, where each data frame contains only the statistically significant genes,
-#'   skipping any empty element
+#' @return A named list of data frames, where each data frame contains only the statistically significant genes from 
+#'   the corresponding element in \code{dge_list}. Any element of \code{dge_list} that is empty or lacks the specified 
+#'   columns is skipped.
 #'
 #' @details
-#' The function loops over each element in \code{dge_list} (skipping empty elements) and filters
-#' the data frame based on the following criteria:
+#' The function loops over each element in \code{dge_list} and for each one:
 #' \itemize{
-#'   \item The value in the column specified by \code{stat_sign} is less than 0.05.
-#'   \item The absolute value of \code{logFC} is greater than or equal to \code{logFC_threshold}.
+#'   \item Checks if the data frame is empty; if so, it moves on to the next element.
+#'   \item Verifies that both the significance column (given by \code{stat_sign}) and the \code{logFC} column are present.
+#'   \item Filters the data frame to retain only those genes for which the significance value is less than 0.05 and 
+#'         the absolute value of \code{logFC} is greater than or equal to \code{logFC_threshold}.
 #' }
 #'
 #' @examples
 #' \dontrun{
-#' # Example: Suppose you have a list of DGE results
+#' # Example: Suppose you have a list of DGE results:
 #' dge_list <- list(
 #'   condition1 = data.frame(p.value = runif(100), logFC = rnorm(100)),
-#'   condition2 = data.frame(p.value = runif(100), logFC = rnorm(100)),
+#'   condition2 = data.frame(p.value = runif(100), logFC = rnorm(100))
 #' )
 #'
 #' # Filter the list using "p.value" as the significance column and a logFC threshold of 1
@@ -116,19 +118,36 @@ create_df <- function(raw_counts, files) {
 select_stat_sign <- function(dge_list, stat_sign, logFC_threshold = 1) {
   #create an empty list to store filtered results
   filt_res <- list()
-
-  #loop over each element in the list
-  for (res in names(dge_list)) {
-    if (length(dge_list[[res]]) == 0 ) {
-      next  # Skip if empty
+  
+  #loop over each element (by name) in dge_list
+  for (res_name in names(dge_list)) {
+    df <- dge_list[[res_name]]
+    
+    #skip if the data frame is empty
+    if (nrow(df) == 0) {
+      next
     }
-    df <- dge_list[[res]]  # Extract the data frame for the current result
-    # Filter the data frame based on the significance threshold and logFC threshold
-    df <- df[which(df[[stat_sign]] < 0.05 & (df$logFC >= logFC_threshold | df$logFC <= (-logFC_threshold))), ]
-    filt_res[[res]] <- df  # Append the filtered data frame to the result list
+    
+    #check that the specified significance column and the "logFC" column exist
+    if (!(stat_sign %in% colnames(df))) {
+      warning(sprintf("Skipping '%s': Column '%s' not found", res_name, stat_sign))
+      next
+    }
+    if (!("logFC" %in% colnames(df))) {
+      warning(sprintf("Skipping '%s': Column 'logFC' not found", res_name))
+      next
+    }
+    
+    #filter the data frame based on the significance threshold and log fold-change threshold
+    df_filtered <- df[df[[stat_sign]] < 0.05 & (df$logFC >= logFC_threshold | df$logFC <= -logFC_threshold), ]
+    
+    #sdd the filtered data frame to the result list under the same name
+    filt_res[[res_name]] <- df_filtered
   }
+  
   return(filt_res)
 }
+
 
 
 #' Filter TPM Data by Pathway and Differential Expression
