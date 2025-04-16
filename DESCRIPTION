@@ -15,7 +15,9 @@ Imports:
     ggrepel,
     PCAtools,
     enrichR,
-    svglite
+    svglite,
+    ggpubr,
+    tibble
 Suggests:
     roxygen2,
     knitr,
