@@ -1,6 +1,6 @@
 Package: TranscripTools
 Title: Streamlined RNA-seq Data Manipulation and Analysis
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: 
     person("Francesco Edoardo Vallone", email = "francesco.edo.vallone@gmail.com", role = c("aut", "cre"))
 Description: TranscripTools simplifies RNA-seq analysis with intuitive functions for differential gene expression, visualization, functional enrichment, and PCA. Designed for efficiency and reproducibility, it reduces complex workflows to a few lines of code.
@@ -17,7 +17,9 @@ Imports:
     enrichR,
     svglite,
     ggpubr,
-    tibble
+    tibble,
+    rlang,
+    rstatix
 Suggests:
     roxygen2,
     knitr,
