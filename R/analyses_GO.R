@@ -42,89 +42,67 @@ enrichPlot <- function(GO) {
 #' you can supply your own database vector via the \code{databases} parameter. The function also
 #' creates bar plots for the top 20 GO terms (based on p-value) for each database.
 #'
-#' @param df A data frame of differential expression results that must contain at least the columns
-#'   \code{logFC} and \code{P.value}. Row names should represent gene symbols.
-#' @param samples A character string that describes the sample group, used in plot titles.
-#' @param databases A character vector specifying the databases to use for GO analysis. Default is:
-#'   \code{c("MSigDB_Hallmark_2020", "GO_Biological_Process_2023", "BioPlanet_2019",
-#'   "GO_Cellular_Component_2023", "Reactome_Pathways_2024")}.
-#'   Importantly, only 5 databases are allowed at a time.
+#' @param df Data frame of DE results with rownames = symbols and a `logFC` column.
+#' @param samples Character used in plot titles.
+#' @param databases Character vector of Enrichr databases to use (any length).
 #'
-#'
-#' @return A named list of ggplot2 objects, each representing a bar plot of the top 20 significant GO terms for a database.
-#'
-#' @details
-#' The function filters the input data frame to retain only those genes with \code{logFC} >= 1 (up-regulated genes),
-#' extracts the gene symbols, and then uses the \code{enrichR} package to perform GO analysis on the provided databases.
-#' For each database, only terms with \code{P.value} < 0.05 are retained and selected columns (columns 1, 3, 4, and 9, corresponding to "Terms", "P.value", "Adj. P.value", and "Genes", respectively)
-#' are used for plotting. The function returns a list of ggplot objects, one for each database.
-#'
-#' @examples
-#' \dontrun{
-#'   # Assume df is your differential expression data frame with row names as gene symbols
-#'   up_plots <- up_go(df, samples = "SampleGroup1")
-#' }
-#'
+#' @return Named list of ggplot objects (one per database).
 #' @import enrichR
 #' @import ggplot2
 #' @export
-up_go <- function(df, samples, databases = c("MSigDB_Hallmark_2020",
-                                             "GO_Biological_Process_2023",
-                                             "BioPlanet_2019",
-                                             "GO_Cellular_Component_2023",
-                                             "Reactome_Pathways_2024")) {
-  if (!requireNamespace("enrichR", quietly = TRUE)) stop("Package 'enrichR' is required")
-  if (!requireNamespace("ggplot2", quietly = TRUE)) stop("Package 'ggplot2' is required")
-
-  #select up-regulated genes (logFC >= 1) and extract gene symbols from row names
-  df <- df[df$logFC >= 1, ]
+up_go <- function(df, samples,
+                  databases = c("MSigDB_Hallmark_2020",
+                                "GO_Biological_Process_2023",
+                                "BioPlanet_2019",
+                                "GO_Cellular_Component_2023",
+                                "Reactome_Pathways_2024")) {
+  if (!requireNamespace("enrichR", quietly = T)) stop("Package 'enrichR' is required")
+  if (!requireNamespace("ggplot2", quietly = T)) stop("Package 'ggplot2' is required")
+  
+  #select UP genes
+  df <- df[df$logFC >= 1, , drop = F]
   genes <- rownames(df)
-
-  #perform GO analysis using enrichR on the specified databases
-  go <- enrichR::enrichr(genes, databases = databases)
-
-  #for each database, filter significant results (P.value < 0.05) and select specific columns
-  msig <- go[[databases[1]]]
-  msig <- msig[msig$P.value < 0.05, c(1, 3, 4, 9)]
-
-  biop <- go[[databases[2]]]
-  biop <- biop[biop$P.value < 0.05, c(1, 3, 4, 9)]
-
-  bioplanet <- go[[databases[3]]]
-  bioplanet <- bioplanet[bioplanet$P.value < 0.05, c(1, 3, 4, 9)]
-
-  cellcomp <- go[[databases[4]]]
-  cellcomp <- cellcomp[cellcomp$P.value < 0.05, c(1, 3, 4, 9)]
-
-  react <- go[[databases[5]]]
-  react <- react[react$P.value < 0.05, c(1, 3, 4, 9)]
-
-  #combine all GO results into a named list
-  all_go <- list(MSigDB_Hallmarks = msig,
-                 GO_Biological_Process_2023 = biop,
-                 BioPlanet_2019 = bioplanet,
-                 GO_Cellular_Component_2023 = cellcomp,
-                 Reactome_Pathways_2024 = react)
-
-  #create bar plots for the top 20 GO terms from each database
+  if (!length(genes)) {
+    warning("No up-regulated genes (logFC >= 1).")
+    return(list())
+  }
+  
+  #run Enrichr
+  go_list <- enrichR::enrichr(genes, databases = databases)
+  
   plots <- list()
-  for (name in names(all_go)) {
-    plot <- ggplot2::ggplot(na.omit(all_go[[name]][1:20, ])) +
-      ggplot2::aes(x = reorder(Term, -P.value),
-                   y = -log10(P.value)) +
+  for (db in databases) {
+    if (!db %in% names(go_list) || is.null(go_list[[db]]) || nrow(go_list[[db]]) == 0) {
+      warning("No results returned for database: ", db)
+      next
+    }
+    
+    df_db <- as.data.frame(go_list[[db]])
+    
+    #use column names, not fixed positions (robust to enrichR changes)
+    if (!all(c("Term","P.value") %in% names(df_db))) next
+    df_db <- df_db[df_db$`P.value` < 0.05, intersect(c("Term","P.value","Adjusted.P.value","Genes"), names(df_db)), drop = FALSE]
+    if (!nrow(df_db)) next
+    
+    #top 20 by smallest p
+    df_db <- df_db[order(df_db$`P.value`, decreasing = FALSE), , drop = FALSE]
+    df_db <- head(df_db, 20)
+    
+    p <- ggplot2::ggplot(df_db, ggplot2::aes(x = stats::reorder(.data$Term, -.data$`P.value`),
+                                             y = -log10(.data$`P.value`))) +
       ggplot2::geom_col(fill = "#8FE0BC", color = "black") +
       ggplot2::coord_flip() +
       ggplot2::theme_light() +
-      ggplot2::labs(title = paste(name, "| Up-regulated genes:", samples),
-                    x = "Terms",
-                    y = "-log10(P-value)") +
+      ggplot2::labs(title = paste(db, "| Up-regulated genes:", samples),
+                    x = "Terms", y = "-log10(P-value)") +
       ggplot2::theme(axis.line = ggplot2::element_line(colour = "black"),
                      panel.grid.major = ggplot2::element_blank(),
                      panel.grid.minor = ggplot2::element_blank(),
                      panel.background = ggplot2::element_blank())
-    print(plot)
-    plots[[name]] <- plot
+    
+    plots[[db]] <- p
   }
+  
   return(plots)
 }
 
@@ -135,87 +113,67 @@ up_go <- function(df, samples, databases = c("MSigDB_Hallmark_2020",
 #' By default, a preset list of databases is used, but you can supply your own via the \code{databases} parameter.
 #' Bar plots are generated for the top 20 GO terms.
 #'
-#' @param df A data frame of differential expression results that must contain the columns \code{logFC} and \code{P.value}.
-#'   Row names should represent gene symbols.
-#' @param samples A character string indicating the sample group, which is used in the plot titles.
-#' @param databases A character vector specifying the databases to use for GO analysis. Default is:
-#'   \code{c("MSigDB_Hallmark_2020", "GO_Biological_Process_2023", "BioPlanet_2019",
-#'   "GO_Cellular_Component_2023", "Reactome_Pathways_2024")}.
-#'   Importantly, only 5 databases are allowed at a time.
+#' Perform GO Analysis on Down-regulated Genes (flexible databases)
 #'
-#' @return A named list of ggplot2 objects, each representing a bar plot for the top 20 significant GO terms for a database.
+#' @param df Data frame of DE results with rownames = symbols and a `logFC` column.
+#' @param samples Character used in plot titles.
+#' @param databases Character vector of Enrichr databases to use (any length).
 #'
-#' @details
-#' The function filters the input data frame to include only genes with \code{logFC} <= -1 (down-regulated),
-#' then uses the \code{enrichR} package to perform GO analysis. For each database, terms with \code{P.value} < 0.05 are
-#' selected and plotted. The resulting plots display the top 20 GO terms based on p-value.
-#'
-#' @examples
-#' \dontrun{
-#'   # Assume df is your differential expression data frame with gene symbols as row names
-#'   down_plots <- down_go(df, samples = "SampleGroup2")
-#' }
-#'
+#' @return Named list of ggplot objects (one per database).
 #' @import enrichR
 #' @import ggplot2
 #' @export
-down_go <- function(df, samples, databases = c("MSigDB_Hallmark_2020",
-                                               "GO_Biological_Process_2023",
-                                               "BioPlanet_2019",
-                                               "GO_Cellular_Component_2023",
-                                               "Reactome_Pathways_2024")) {
+down_go <- function(df, samples,
+                    databases = c("MSigDB_Hallmark_2020",
+                                  "GO_Biological_Process_2023",
+                                  "BioPlanet_2019",
+                                  "GO_Cellular_Component_2023",
+                                  "Reactome_Pathways_2024")) {
   if (!requireNamespace("enrichR", quietly = TRUE)) stop("Package 'enrichR' is required")
   if (!requireNamespace("ggplot2", quietly = TRUE)) stop("Package 'ggplot2' is required")
-
-  #select down-regulated genes (logFC <= -1) and extract gene symbols
-  df <- df[df$logFC <= -1, ]
+  
+  #select DOWN genes
+  df <- df[df$logFC <= -1, , drop = FALSE]
   genes <- rownames(df)
-
-  #perform GO analysis using the specified databases
-  go <- enrichR::enrichr(genes, databases = databases)
-
-  #filter and subset results for each database
-  msig <- go[[databases[1]]]
-  msig <- msig[msig$P.value < 0.05, c(1, 3, 4, 9)]
-
-  biop <- go[[databases[2]]]
-  biop <- biop[biop$P.value < 0.05, c(1, 3, 4, 9)]
-
-  bioplanet <- go[[databases[3]]]
-  bioplanet <- bioplanet[bioplanet$P.value < 0.05, c(1, 3, 4, 9)]
-
-  cellcomp <- go[[databases[4]]]
-  cellcomp <- cellcomp[cellcomp$P.value < 0.05, c(1, 3, 4, 9)]
-
-  react <- go[[databases[5]]]
-  react <- react[react$P.value < 0.05, c(1, 3, 4, 9)]
-
-  #combine all filtered results into a named list
-  all_go <- list(MSigDB_Hallmarks = msig,
-                 GO_Biological_Process_2023 = biop,
-                 BioPlanet_2019 = bioplanet,
-                 GO_Cellular_Component_2023 = cellcomp,
-                 Reactome_Pathways_2024 = react)
-
-  #create bar plots for the top 20 GO terms for each database
+  if (!length(genes)) {
+    warning("No down-regulated genes (logFC <= -1).")
+    return(list())
+  }
+  
+  #run Enrichr
+  go_list <- enrichR::enrichr(genes, databases = databases)
+  
   plots <- list()
-  for (name in names(all_go)) {
-    plot <- ggplot2::ggplot(na.omit(all_go[[name]][1:20, ])) +
-      ggplot2::aes(x = reorder(Term, -P.value),
-                   y = -log10(P.value)) +
+  for (db in databases) {
+    if (!db %in% names(go_list) || is.null(go_list[[db]]) || nrow(go_list[[db]]) == 0) {
+      warning("No results returned for database: ", db)
+      next
+    }
+    
+    df_db <- as.data.frame(go_list[[db]])
+    
+    if (!all(c("Term","P.value") %in% names(df_db))) next
+    df_db <- df_db[df_db$`P.value` < 0.05, intersect(c("Term","P.value","Adjusted.P.value","Genes"), names(df_db)), drop = FALSE]
+    if (!nrow(df_db)) next
+    
+    df_db <- df_db[order(df_db$`P.value`, decreasing = FALSE), , drop = FALSE]
+    df_db <- head(df_db, 20)
+    
+    p <- ggplot2::ggplot(df_db, ggplot2::aes(x = stats::reorder(.data$Term, -.data$`P.value`),
+                                             y = -log10(.data$`P.value`))) +
       ggplot2::geom_col(fill = "#706F9B", color = "black") +
       ggplot2::coord_flip() +
       ggplot2::theme_light() +
-      ggplot2::labs(title = paste(name, "| Down-regulated genes:", samples),
-                    x = "Terms",
-                    y = "-log10(P-value)") +
+      ggplot2::labs(title = paste(db, "| Down-regulated genes:", samples),
+                    x = "Terms", y = "-log10(P-value)") +
       ggplot2::theme(axis.line = ggplot2::element_line(colour = "black"),
                      panel.grid.major = ggplot2::element_blank(),
                      panel.grid.minor = ggplot2::element_blank(),
                      panel.background = ggplot2::element_blank())
-    print(plot)
-    plots[[name]] <- plot
+    
+    plots[[db]] <- p
   }
+  
   return(plots)
 }
 

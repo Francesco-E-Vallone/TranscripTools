@@ -11,7 +11,7 @@ coloring points by their significance category. It also labels the top top_n up�
 
     <a class="navbar-brand me-2" href="../index.html">TranscripTools</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,7 @@ coloring points by their significance category. It also labels the top top_n up�
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
       </ul></div>
@@ -45,10 +46,20 @@ coloring points by their significance category. It also labels the top <code>top
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">volplot</span><span class="op">(</span></span>
 <span>  <span class="va">res</span>,</span>
+<span>  p_col <span class="op">=</span> <span class="st">"PValue"</span>,</span>
+<span>  logFC_col <span class="op">=</span> <span class="st">"logFC"</span>,</span>
+<span>  fdr_col <span class="op">=</span> <span class="st">"FDR"</span>,</span>
 <span>  fdr_threshold <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  fc_threshold <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Up <span class="op">=</span> <span class="st">"#FF8F8F"</span>, Down <span class="op">=</span> <span class="st">"#30B3A9"</span>, `Not Significant` <span class="op">=</span> <span class="st">"grey"</span><span class="op">)</span>,</span>
-<span>  top_n <span class="op">=</span> <span class="fl">10</span></span>
+<span>  top_n <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  gene_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  title <span class="op">=</span> <span class="st">"Volcano plot"</span>,</span>
+<span>  subtitle <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  caption <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  x_lab <span class="op">=</span> <span class="st">"Log2 fold change"</span>,</span>
+<span>  y_lab <span class="op">=</span> <span class="st">"-log10(p-value)"</span>,</span>
+<span>  legend_title <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -57,45 +68,61 @@ coloring points by their significance category. It also labels the top <code>top
 
 
 <dl><dt id="arg-res">res<a class="anchor" aria-label="anchor" href="#arg-res"></a></dt>
-<dd><p>A data frame of differential expression results that includes columns for log fold change (<code>logFC</code>),
-p-values (<code>PValue</code>), and significance category (<code>sign</code>). It is recommended to run <code><a href="add_significance.html">add_significance()</a></code> first.</p></dd>
+<dd><p>data.frame with at least <code>logFC_col</code> and <code>p_col</code>.</p></dd>
+
+
+<dt id="arg-p-col">p_col<a class="anchor" aria-label="anchor" href="#arg-p-col"></a></dt>
+<dd><p>Character. Column name for p-values used on y-axis. Default "PValue".</p></dd>
+
+
+<dt id="arg-logfc-col">logFC_col<a class="anchor" aria-label="anchor" href="#arg-logfc-col"></a></dt>
+<dd><p>Character. Column name for log2 fold change. Default "logFC".</p></dd>
+
+
+<dt id="arg-fdr-col">fdr_col<a class="anchor" aria-label="anchor" href="#arg-fdr-col"></a></dt>
+<dd><p>Character. Adjusted p-value column (used to derive <code>sign</code> if missing). Default "FDR".</p></dd>
 
 
 <dt id="arg-fdr-threshold">fdr_threshold<a class="anchor" aria-label="anchor" href="#arg-fdr-threshold"></a></dt>
-<dd><p>Numeric, the FDR threshold used for drawing the horizontal reference line. Default is <code>0.05</code>.</p></dd>
+<dd><p>Numeric. Threshold for horizontal line and significance logic. Default 0.05.</p></dd>
 
 
 <dt id="arg-fc-threshold">fc_threshold<a class="anchor" aria-label="anchor" href="#arg-fc-threshold"></a></dt>
-<dd><p>Numeric, the log2 fold change threshold used for drawing vertical reference lines. Default is <code>1</code>.</p></dd>
+<dd><p>Numeric. Threshold for vertical lines and significance logic. Default 1.</p></dd>
 
 
 <dt id="arg-colors">colors<a class="anchor" aria-label="anchor" href="#arg-colors"></a></dt>
-<dd><p>A named vector of colors for the significance categories. Default is <code>c("Up" = "#FF8F8F", "Down" = "#30B3A9", "Not Significant" = "grey")</code>.</p></dd>
+<dd><p>Named vector mapping c("Up","Down","Not Significant") to colors.</p></dd>
 
 
 <dt id="arg-top-n">top_n<a class="anchor" aria-label="anchor" href="#arg-top-n"></a></dt>
-<dd><p>An integer specifying the number of top up‑regulated and top down‑regulated genes to label on the plot. Default is <code>10</code>.</p></dd>
+<dd><p>Integer. Label top N up and top N down genes among significant rows. Default 10.</p></dd>
+
+
+<dt id="arg-gene-col">gene_col<a class="anchor" aria-label="anchor" href="#arg-gene-col"></a></dt>
+<dd><p>Optional character: column with gene names; if NULL uses rownames.</p></dd>
+
+
+<dt id="arg-title-subtitle-caption-x-lab-y-lab-legend-title">title, subtitle, caption, x_lab, y_lab, legend_title<a class="anchor" aria-label="anchor" href="#arg-title-subtitle-caption-x-lab-y-lab-legend-title"></a></dt>
+<dd><p>Character plot labels.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>ggplot</code> object representing the volcano plot.</p>
+    <p>A ggplot object (returned invisibly).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The function identifies the top <code>top_n</code> up‑regulated genes (highest <code>logFC</code>) and the top <code>top_n</code> down‑regulated genes
-(lowest <code>logFC</code>) from those with p-values less than the threshold. These genes are then labeled on the plot using <code>geom_text_repel</code>.
-The x-axis displays log2 fold change and the y-axis shows -log10(p-value). Dashed lines indicate the significance thresholds.
-Important: run the add_significance() function prior to this one, as it is essential to have the labels of logFC direction ("Up", "Down", "Not Significant")</p>
+    <p>Volcano plot (custom p-value column + fully customizable labels)</p>
+<p>Draws log2FC (x) vs -log10(p) (y). Lets you declare which column is the p-value,
+and customize all plot labels. If <code>sign</code> is absent, it will be computed using
+<code><a href="add_significance.html">add_significance()</a></code> with <code>fdr_col</code> when available (else it falls back to <code>p_col</code>).</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Assume deg_df is your differential expression results data frame and has been processed with add_significance()</span></span></span>
-<span class="r-in"><span><span class="va">volcano_plot</span> <span class="op">&lt;-</span> <span class="fu">volplot</span><span class="op">(</span><span class="va">deg_df</span>, fdr_threshold <span class="op">=</span> <span class="fl">0.05</span>, fc_threshold <span class="op">=</span> <span class="fl">1</span>, top_n <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
-<span class="r-in"><span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># p &lt;- volplot(df, p_col="pval", logFC_col="log2FC", fdr_col="padj",</span></span></span>
+<span class="r-in"><span><span class="co">#              title="My volcano", x_lab="log2FC", y_lab="-log10(p)")</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -107,7 +134,7 @@ Important: run the add_significance() function prior to this one, as it is essen
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

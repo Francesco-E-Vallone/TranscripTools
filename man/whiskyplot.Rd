@@ -13,71 +13,40 @@ whiskyplot(
   test = c("wilcox", "t"),
   p.adjust.method = "none",
   comparisons = NULL,
+  palette = NULL,
   plot_title = "Gene expression",
   x_lab = group_col,
-  y_lab = "log(TPM + 1)"
+  y_lab = "log(TMM/TPM + 1)",
+  subtitle = NULL,
+  caption = NULL
 )
 }
 \arguments{
-\item{tmm}{A numeric matrix or data frame (rows = genes, columns = samples).}
+\item{tmm}{Numeric matrix/data.frame (rows = genes, cols = samples).}
 
-\item{genes}{Character vector of gene names (must match \code{rownames(tmm)}).}
+\item{genes}{Character vector of gene names (must match rownames(tmm)).}
 
-\item{metadata}{A data frame of sample metadata; must contain a column matching \code{sample_col},
-and row names matching \code{colnames(tmm)}.}
+\item{metadata}{Data frame with sample metadata.}
 
-\item{sample_col}{Character; metadata column containing sample IDs (default \code{"samples"}).}
+\item{sample_col}{Character. Column in \code{metadata} containing sample IDs (matches colnames(tmm)). Default "samples".}
 
-\item{group_col}{Character; metadata column defining comparison groups (default \code{"samples"}).}
+\item{group_col}{Character. Column in \code{metadata} defining groups. Default "samples".}
 
-\item{test}{Character; which test to run—either \code{"wilcox"} or \code{"t"}. Default \code{"wilcox"}.}
+\item{test}{One of c("wilcox","t"). Default "wilcox".}
 
-\item{p.adjust.method}{Character; p-value adjustment method for \strong{rstatix} (default \code{"none"}).}
+\item{p.adjust.method}{P-value adjustment for rstatix ("none","BH",...). Default "none".}
 
-\item{comparisons}{Optional list of pairwise comparisons (each a length-2 character vector).
-If \code{NULL}, all pairwise combinations are tested.}
+\item{comparisons}{Optional list of length-2 character vectors (group names). If NULL, all pairwise combos.}
 
-\item{plot_title}{Character; overall plot title (default \code{"Gene expression"}).}
+\item{palette}{Optional named vector for group fill colors.}
 
-\item{x_lab}{Character; x-axis label (default = \code{group_col}).}
-
-\item{y_lab}{Character; y-axis label (default \code{"log(TMM/TPM + 1)"}).}
+\item{plot_title, x_lab, y_lab, subtitle, caption}{Character plot labels. \code{x_lab} defaults to \code{group_col}.}
 }
 \value{
-A \code{ggplot} object: faceted whisker plots annotated with significant p-values.
+A ggplot object.
 }
 \description{
 Subsets a normalized count matrix (TMM or TPM) to a set of genes, merges with sample metadata,
 and draws faceted boxplots (“whisker plots”) with jittered points. Pairwise comparisons are
 computed via \strong{rstatix} and annotated by \strong{ggpubr}.
-}
-\details{
-\enumerate{
-\item Verifies \code{group_col} exists in \code{metadata}.
-\item Subsets \code{tmm} to \code{genes}, reshapes to long form.
-\item Merges in \code{metadata}, drops samples missing \code{group_col}.
-\item Keeps only genes present in ≥2 groups.
-\item Runs pairwise tests per gene via \strong{rstatix}, filters p ≤ 0.05.
-\item Computes safe \code{y.position} for each gene’s annotation.
-\item Draws boxplots + jitter; adds p-value annotations with \strong{ggpubr}.
-}
-}
-\examples{
-\dontrun{
-  comps <- list(c("NM_IgM","NWT_IgM"), c("NM_NT","NWT_NT"))
-  whiskyplot(
-    tmm             = tmm,
-    genes           = rownames(tmm_allint),
-    metadata        = meta,
-    sample_col      = "SampleID",
-    group_col       = "sample_complete",
-    test            = "wilcox",
-    p.adjust.method = "BH",
-    comparisons     = comps,
-    plot_title      = "Whiskyplot: Gene Expression",
-    x_lab           = "Experimental Group",
-    y_lab           = "Log(TPM + 1)"
-  )
-}
-
 }

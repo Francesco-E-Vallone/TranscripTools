@@ -12,35 +12,18 @@ up_go(
 )
 }
 \arguments{
-\item{df}{A data frame of differential expression results that must contain at least the columns
-\code{logFC} and \code{P.value}. Row names should represent gene symbols.}
+\item{df}{Data frame of DE results with rownames = symbols and a \code{logFC} column.}
 
-\item{samples}{A character string that describes the sample group, used in plot titles.}
+\item{samples}{Character used in plot titles.}
 
-\item{databases}{A character vector specifying the databases to use for GO analysis. Default is:
-\code{c("MSigDB_Hallmark_2020", "GO_Biological_Process_2023", "BioPlanet_2019",
-  "GO_Cellular_Component_2023", "Reactome_Pathways_2024")}.
-Importantly, only 5 databases are allowed at a time.}
+\item{databases}{Character vector of Enrichr databases to use (any length).}
 }
 \value{
-A named list of ggplot2 objects, each representing a bar plot of the top 20 significant GO terms for a database.
+Named list of ggplot objects (one per database).
 }
 \description{
 This function performs Gene Ontology (GO) analysis on up-regulated genes from a differential
 expression data frame. By default, it uses a preset list of GO and pathway databases. However,
 you can supply your own database vector via the \code{databases} parameter. The function also
 creates bar plots for the top 20 GO terms (based on p-value) for each database.
-}
-\details{
-The function filters the input data frame to retain only those genes with \code{logFC} >= 1 (up-regulated genes),
-extracts the gene symbols, and then uses the \code{enrichR} package to perform GO analysis on the provided databases.
-For each database, only terms with \code{P.value} < 0.05 are retained and selected columns (columns 1, 3, 4, and 9, corresponding to "Terms", "P.value", "Adj. P.value", and "Genes", respectively)
-are used for plotting. The function returns a list of ggplot objects, one for each database.
-}
-\examples{
-\dontrun{
-  # Assume df is your differential expression data frame with row names as gene symbols
-  up_plots <- up_go(df, samples = "SampleGroup1")
-}
-
 }

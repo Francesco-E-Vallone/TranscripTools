@@ -13,7 +13,7 @@ Bar plots are generated for the top 20 GO terms."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">TranscripTools</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -22,6 +22,7 @@ Bar plots are generated for the top 20 GO terms."></head><body>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
       </ul></div>
@@ -59,41 +60,26 @@ Bar plots are generated for the top 20 GO terms.</p>
 
 
 <dl><dt id="arg-df">df<a class="anchor" aria-label="anchor" href="#arg-df"></a></dt>
-<dd><p>A data frame of differential expression results that must contain the columns <code>logFC</code> and <code>P.value</code>.
-Row names should represent gene symbols.</p></dd>
+<dd><p>Data frame of DE results with rownames = symbols and a <code>logFC</code> column.</p></dd>
 
 
 <dt id="arg-samples">samples<a class="anchor" aria-label="anchor" href="#arg-samples"></a></dt>
-<dd><p>A character string indicating the sample group, which is used in the plot titles.</p></dd>
+<dd><p>Character used in plot titles.</p></dd>
 
 
 <dt id="arg-databases">databases<a class="anchor" aria-label="anchor" href="#arg-databases"></a></dt>
-<dd><p>A character vector specifying the databases to use for GO analysis. Default is:
-<code>c("MSigDB_Hallmark_2020", "GO_Biological_Process_2023", "BioPlanet_2019",
-  "GO_Cellular_Component_2023", "Reactome_Pathways_2024")</code>.
-Importantly, only 5 databases are allowed at a time.</p></dd>
+<dd><p>Character vector of Enrichr databases to use (any length).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A named list of ggplot2 objects, each representing a bar plot for the top 20 significant GO terms for a database.</p>
+    <p>Named list of ggplot objects (one per database).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The function filters the input data frame to include only genes with <code>logFC</code> &lt;= -1 (down-regulated),
-then uses the <code>enrichR</code> package to perform GO analysis. For each database, terms with <code>P.value</code> &lt; 0.05 are
-selected and plotted. The resulting plots display the top 20 GO terms based on p-value.</p>
+    <p>Perform GO Analysis on Down-regulated Genes (flexible databases)</p>
     </div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span>  <span class="co"># Assume df is your differential expression data frame with gene symbols as row names</span></span></span>
-<span class="r-in"><span>  <span class="va">down_plots</span> <span class="op">&lt;-</span> <span class="fu">down_go</span><span class="op">(</span><span class="va">df</span>, samples <span class="op">=</span> <span class="st">"SampleGroup2"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -103,7 +89,7 @@ selected and plotted. The resulting plots display the top 20 GO terms based on p
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

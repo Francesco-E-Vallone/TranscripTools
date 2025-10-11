@@ -13,18 +13,18 @@ add_significance(
 )
 }
 \arguments{
-\item{res}{A data frame of differential expression results, with row names representing gene identifiers.}
+\item{res}{data.frame of DE results (rows = genes).}
 
-\item{fdr_col}{A character string specifying the name of the column that contains FDR or adjusted p-values. Default is \code{"FDR"}.}
+\item{fdr_col}{Character. Column name with adjusted p-values (e.g., FDR, padj). Default "FDR".}
 
-\item{logFC_col}{A character string specifying the name of the column that contains log2 fold changes. Default is \code{"logFC"}.}
+\item{logFC_col}{Character. Column name with log2 fold change. Default "logFC".}
 
-\item{fdr_threshold}{Numeric, threshold for statistical significance. Default is \code{0.05}.}
+\item{fdr_threshold}{Numeric. Adjusted p-value cutoff. Default 0.05.}
 
-\item{fc_threshold}{Numeric, threshold for absolute log2 fold change. Default is \code{1}.}
+\item{fc_threshold}{Numeric. Absolute log2FC cutoff. Default 1.}
 }
 \value{
-The original data frame with an added column \code{sign} that categorizes genes as "Up", "Down", or "Not Significant".
+\code{res} with an added factor column \code{sign} in c("Up","Down","Not Significant").
 }
 \description{
 This function adds a significance category to a differential expression results data frame.
@@ -32,18 +32,14 @@ The significance is determined using an FDR (or adjusted p-value) column and a l
 By default, genes with FDR < 0.05 and absolute logFC > 1 are categorized as "Up" (if logFC > 1) or "Down" (if logFC < -1).
 }
 \details{
-Genes are categorized as follows:
-\itemize{
-\item \strong{Up}: genes with \code{logFC} > fc_threshold and FDR < fdr_threshold.
-\item \strong{Down}: genes with \code{logFC} < -fc_threshold and FDR < fdr_threshold.
-\item \strong{Not Significant}: all other genes.
-}
+Flag differential expression direction by thresholds
+
+Classifies each row as "Up", "Down", or "Not Significant" using a chosen
+adjusted p-value column and a log2 fold-change column.
+
+Up: logFC >  fc_threshold & FDR < fdr_threshold
+Down: logFC < -fc_threshold & FDR < fdr_threshold
 }
 \examples{
-\dontrun{
-# Assume deg_df is your differential expression results data frame:
-deg_df <- add_significance(deg_df, fdr_col = "adj.P.Val", logFC_col = "logFC",
-                           fdr_threshold = 0.05, fc_threshold = 1)
-}
-
+# df <- add_significance(df, fdr_col="adj.P.Val", logFC_col="logFC", fdr_threshold=0.05, fc_threshold=1)
 }

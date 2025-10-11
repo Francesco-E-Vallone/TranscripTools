@@ -4,35 +4,44 @@
 #' The significance is determined using an FDR (or adjusted p-value) column and a log2 fold change column.
 #' By default, genes with FDR < 0.05 and absolute logFC > 1 are categorized as "Up" (if logFC > 1) or "Down" (if logFC < -1).
 #'
-#' @param res A data frame of differential expression results, with row names representing gene identifiers.
-#' @param fdr_col A character string specifying the name of the column that contains FDR or adjusted p-values. Default is \code{"FDR"}.
-#' @param logFC_col A character string specifying the name of the column that contains log2 fold changes. Default is \code{"logFC"}.
-#' @param fdr_threshold Numeric, threshold for statistical significance. Default is \code{0.05}.
-#' @param fc_threshold Numeric, threshold for absolute log2 fold change. Default is \code{1}.
+#' Flag differential expression direction by thresholds
 #'
-#' @return The original data frame with an added column \code{sign} that categorizes genes as "Up", "Down", or "Not Significant".
+#' Classifies each row as "Up", "Down", or "Not Significant" using a chosen
+#' adjusted p-value column and a log2 fold-change column.
 #'
+#' @param res data.frame of DE results (rows = genes).
+#' @param fdr_col Character. Column name with adjusted p-values (e.g., FDR, padj). Default "FDR".
+#' @param logFC_col Character. Column name with log2 fold change. Default "logFC".
+#' @param fdr_threshold Numeric. Adjusted p-value cutoff. Default 0.05.
+#' @param fc_threshold Numeric. Absolute log2FC cutoff. Default 1.
+#'
+#' @return `res` with an added factor column `sign` in c("Up","Down","Not Significant").
 #' @details
-#' Genes are categorized as follows:
-#' \itemize{
-#'   \item \strong{Up}: genes with \code{logFC} > fc_threshold and FDR < fdr_threshold.
-#'   \item \strong{Down}: genes with \code{logFC} < -fc_threshold and FDR < fdr_threshold.
-#'   \item \strong{Not Significant}: all other genes.
-#' }
-#'
+#' Up: logFC >  fc_threshold & FDR < fdr_threshold  
+#' Down: logFC < -fc_threshold & FDR < fdr_threshold
 #' @examples
-#' \dontrun{
-#' # Assume deg_df is your differential expression results data frame:
-#' deg_df <- add_significance(deg_df, fdr_col = "adj.P.Val", logFC_col = "logFC",
-#'                            fdr_threshold = 0.05, fc_threshold = 1)
-#' }
-#'
+#' # df <- add_significance(df, fdr_col="adj.P.Val", logFC_col="logFC", fdr_threshold=0.05, fc_threshold=1)
 #' @export
-add_significance <- function(res, fdr_col = "FDR", logFC_col = "logFC", fdr_threshold = 0.05, fc_threshold = 1) {
-  res$sign <- "Not Significant"
-  res$sign[res[[fdr_col]] < fdr_threshold & res[[logFC_col]] > fc_threshold] <- "Up"
-  res$sign[res[[fdr_col]] < fdr_threshold & res[[logFC_col]] < -fc_threshold] <- "Down"
-  return(res)
+add_significance <- function(res,
+                             fdr_col = "FDR",
+                             logFC_col = "logFC",
+                             fdr_threshold = 0.05,
+                             fc_threshold = 1) {
+  stopifnot(is.data.frame(res))
+  need <- c(fdr_col, logFC_col)
+  miss <- setdiff(need, names(res))
+  if (length(miss)) stop("Missing required column(s): ", paste(miss, collapse = ", "))
+  
+  fdr <- suppressWarnings(as.numeric(res[[fdr_col]]))
+  lfc <- suppressWarnings(as.numeric(res[[logFC_col]]))
+  
+  sign <- rep("Not Significant", nrow(res))
+  ok <- !is.na(fdr) & !is.na(lfc)
+  sign[ ok & fdr < fdr_threshold & lfc >  fc_threshold] <- "Up"
+  sign[ ok & fdr < fdr_threshold & lfc < -fc_threshold] <- "Down"
+  
+  res$sign <- factor(sign, levels = c("Up","Down","Not Significant"))
+  res
 }
 
 
@@ -42,79 +51,101 @@ add_significance <- function(res, fdr_col = "FDR", logFC_col = "logFC", fdr_thre
 #' It uses \code{ggplot2} and \code{ggrepel} to plot log2 fold changes versus -log10(p-value),
 #' coloring points by their significance category. It also labels the top \code{top_n} up‑ and down‑regulated genes.
 #'
-#' @param res A data frame of differential expression results that includes columns for log fold change (\code{logFC}),
-#'   p-values (\code{PValue}), and significance category (\code{sign}). It is recommended to run \code{add_significance()} first.
-#' @param fdr_threshold Numeric, the FDR threshold used for drawing the horizontal reference line. Default is \code{0.05}.
-#' @param fc_threshold Numeric, the log2 fold change threshold used for drawing vertical reference lines. Default is \code{1}.
-#' @param colors A named vector of colors for the significance categories. Default is \code{c("Up" = "#FF8F8F", "Down" = "#30B3A9", "Not Significant" = "grey")}.
-#' @param top_n An integer specifying the number of top up‑regulated and top down‑regulated genes to label on the plot. Default is \code{10}.
+#' Volcano plot (custom p-value column + fully customizable labels)
 #'
-#' @return A \code{ggplot} object representing the volcano plot.
+#' Draws log2FC (x) vs -log10(p) (y). Lets you declare which column is the p-value,
+#' and customize all plot labels. If `sign` is absent, it will be computed using
+#' `add_significance()` with `fdr_col` when available (else it falls back to `p_col`).
 #'
-#' @details
-#' The function identifies the top \code{top_n} up‑regulated genes (highest \code{logFC}) and the top \code{top_n} down‑regulated genes
-#' (lowest \code{logFC}) from those with p-values less than the threshold. These genes are then labeled on the plot using \code{geom_text_repel}.
-#' The x-axis displays log2 fold change and the y-axis shows -log10(p-value). Dashed lines indicate the significance thresholds.
-#' Important: run the add_significance() function prior to this one, as it is essential to have the labels of logFC direction ("Up", "Down", "Not Significant")
+#' @param res data.frame with at least `logFC_col` and `p_col`.
+#' @param p_col Character. Column name for p-values used on y-axis. Default "PValue".
+#' @param logFC_col Character. Column name for log2 fold change. Default "logFC".
+#' @param fdr_col Character. Adjusted p-value column (used to derive `sign` if missing). Default "FDR".
+#' @param fdr_threshold Numeric. Threshold for horizontal line and significance logic. Default 0.05.
+#' @param fc_threshold Numeric. Threshold for vertical lines and significance logic. Default 1.
+#' @param colors Named vector mapping c("Up","Down","Not Significant") to colors.
+#' @param top_n Integer. Label top N up and top N down genes among significant rows. Default 10.
+#' @param gene_col Optional character: column with gene names; if NULL uses rownames.
+#' @param title,subtitle,caption,x_lab,y_lab,legend_title Character plot labels.
 #'
+#' @return A ggplot object (returned invisibly).
 #' @examples
-#' \dontrun{
-#' # Assume deg_df is your differential expression results data frame and has been processed with add_significance()
-#' volcano_plot <- volplot(deg_df, fdr_threshold = 0.05, fc_threshold = 1, top_n = 10)
-#' }
-#'
+#' # p <- volplot(df, p_col="pval", logFC_col="log2FC", fdr_col="padj",
+#' #              title="My volcano", x_lab="log2FC", y_lab="-log10(p)")
 #' @import ggplot2
 #' @import ggrepel
 #' @import dplyr
+#' @importFrom rlang .data
 #' @export
-volplot <- function(res, fdr_threshold = 0.05, fc_threshold = 1,
+volplot <- function(res,
+                    p_col = "PValue",
+                    logFC_col = "logFC",
+                    fdr_col = "FDR",
+                    fdr_threshold = 0.05,
+                    fc_threshold = 1,
                     colors = c("Up" = "#FF8F8F", "Down" = "#30B3A9", "Not Significant" = "grey"),
-                    top_n = 10) {
-  #select top up-regulated genes
-  top_up <- res %>%
-    filter(PValue < fdr_threshold, logFC > fc_threshold) %>%
-    arrange(desc(logFC)) %>%
-    slice_head(n = top_n)
-
-  #select top down-regulated genes
-  top_down <- res %>%
-    filter(PValue < fdr_threshold, logFC < -fc_threshold) %>%
-    arrange(logFC) %>%
-    slice_head(n = top_n)
-
-  #combine top genes for labeling
-  top_genes <- bind_rows(top_up, top_down)
-
-  #ensure gene names are available for labeling
-  res$Gene <- rownames(res)
-  top_genes$label <- rownames(top_genes)
-
-  #create the volcano plot
-  p <- ggplot(res, aes(x = logFC, y = -log10(PValue), color = sign)) +
-    geom_point(alpha = 0.8, size = 2) +
-    scale_color_manual(values = colors) +
-    geom_hline(yintercept = -log10(fdr_threshold), linetype = "dashed") +
-    geom_vline(xintercept = c(-fc_threshold, fc_threshold), linetype = "dashed") +
-    theme_minimal() +
-    labs(title = "Volcano Plot",
-         x = "Log2 Fold Change",
-         y = "-log10(p-value)") +
-    theme(legend.position = "right",
-          axis.text = element_text(size = 14),
-          axis.title = element_text(size = 16),
-          plot.title = element_text(hjust = 0.5, size = 18, face = "bold")) +
-    geom_text_repel(
-      data = top_genes,
-      aes(label = label),
-      size = 2,
+                    top_n = 10,
+                    gene_col = NULL,
+                    title = "Volcano plot",
+                    subtitle = NULL,
+                    caption = NULL,
+                    x_lab = "Log2 fold change",
+                    y_lab = "-log10(p-value)",
+                    legend_title = NULL) {
+  
+  stopifnot(is.data.frame(res))
+  need <- c(p_col, logFC_col)
+  miss <- setdiff(need, names(res))
+  if (length(miss)) stop("Missing required column(s): ", paste(miss, collapse = ", "))
+  
+  res[[p_col]]     <- suppressWarnings(as.numeric(res[[p_col]]))
+  res[[logFC_col]] <- suppressWarnings(as.numeric(res[[logFC_col]]))
+  
+  if (!("sign" %in% names(res))) {
+    if (fdr_col %in% names(res)) {
+      res <- add_significance(res, fdr_col = fdr_col, logFC_col = logFC_col,
+                              fdr_threshold = fdr_threshold, fc_threshold = fc_threshold)
+    } else {
+      res <- add_significance(res, fdr_col = p_col, logFC_col = logFC_col,
+                              fdr_threshold = fdr_threshold, fc_threshold = fc_threshold)
+    }
+  }
+  
+  if (is.null(gene_col)) {
+    res$..gene_label.. <- if (!is.null(rownames(res))) rownames(res) else as.character(seq_len(nrow(res)))
+    gene_col <- "..gene_label.."
+  } else if (!gene_col %in% names(res)) {
+    stop("gene_col '", gene_col, "' not found in data.")
+  }
+  
+  #direction
+  sig <- !is.na(res[[p_col]]) & res[[p_col]] < fdr_threshold
+  up_df   <- dplyr::filter(res, sig, .data[[logFC_col]] >  fc_threshold) |> dplyr::arrange(dplyr::desc(.data[[logFC_col]])) |> dplyr::slice_head(n = top_n)
+  down_df <- dplyr::filter(res, sig, .data[[logFC_col]] < -fc_threshold) |> dplyr::arrange(.data[[logFC_col]]) |> dplyr::slice_head(n = top_n)
+  top_df  <- dplyr::bind_rows(up_df, down_df)
+  
+  #plot
+  p <- ggplot2::ggplot(res, ggplot2::aes(x = .data[[logFC_col]], y = -log10(.data[[p_col]]), color = .data$sign)) +
+    ggplot2::geom_point(alpha = 0.8, size = 2) +
+    ggplot2::scale_color_manual(values = colors, name = legend_title) +
+    ggplot2::geom_hline(yintercept = -log10(fdr_threshold), linetype = "dashed") +
+    ggplot2::geom_vline(xintercept = c(-fc_threshold, fc_threshold), linetype = "dashed") +
+    ggplot2::theme_minimal(base_size = 13) +
+    ggplot2::labs(title = title, subtitle = subtitle, caption = caption, x = x_lab, y = y_lab) +
+    ggplot2::theme(legend.position = "right",
+                   plot.title = ggplot2::element_text(hjust = 0.5, face = "bold"))
+  
+  if (nrow(top_df) > 0) {
+    p <- p + ggrepel::geom_text_repel(
+      data = top_df,
+      ggplot2::aes(label = .data[[gene_col]]),
+      size = 3,
       color = "black",
-      fontface = "italic",
       max.overlaps = Inf,
       box.padding = 0.5
-    ) +
-    scale_x_continuous(limits = c(min(res$logFC) - 1, max(res$logFC) + 1)) +
-    scale_y_continuous(trans = "log1p")
-
+    )
+  }
+  
   print(p)
   return(p)
 }

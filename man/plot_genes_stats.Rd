@@ -12,74 +12,45 @@ plot_genes_stats(
   group_col = "samples",
   test = "t.test",
   comparisons = NULL,
+  log2p1 = TRUE,
+  palette = NULL,
+  facet_scales = "free_y",
   plot_title = "Gene Expression",
   x_lab = group_col,
-  y_lab = "Log2(TMM/TPM + 1)"
+  y_lab = if (log2p1) "log2(Expression + 1)" else "Expression",
+  subtitle = NULL,
+  caption = NULL
 )
 }
 \arguments{
-\item{tmm}{A numeric matrix or data frame of normalized counts (TMM or TPM) with row names representing genes
-and column names representing sample IDs.}
+\item{tmm}{Numeric matrix/data.frame (rows = genes, cols = samples).}
 
-\item{genes}{A character vector of gene names to include in the plot.}
+\item{genes}{Character vector of genes to plot.}
 
-\item{metadata}{A data frame containing sample metadata. Its row names should correspond to the column names in \code{tmm}.}
+\item{metadata}{Data frame with sample metadata.}
 
-\item{sample_col}{A character string specifying the column in \code{metadata} that identifies samples. Default is \code{"samples"}.}
+\item{sample_col}{Character. Column in \code{metadata} containing sample IDs matching \code{colnames(tmm)}. Default "samples".}
 
-\item{group_col}{A character string specifying the column in \code{metadata} that defines groups for comparison. Default is \code{"samples"}.}
+\item{group_col}{Character. Column in \code{metadata} defining groups. Default "samples".}
 
-\item{test}{A character string specifying the statistical test to use for comparisons (e.g., \code{"t.test"}, \code{"wilcox.test"}, \code{"anova"}).
-Default is \code{"t.test"}.}
+\item{test}{Character. Statistical test for pairwise comparisons (e.g., "t.test", "wilcox.test", "anova"). Default "t.test".}
 
-\item{comparisons}{An optional list of pairwise comparisons (each a character vector of two group names) to be used in
-\code{ggpubr::stat_compare_means()}. If \code{NULL} (default), no statistical comparisons are added.}
+\item{comparisons}{Optional list of length-2 character vectors with group names for pairwise tests.}
 
-\item{plot_title}{A character string for the overall plot title. Default is \code{"Gene Expression"}.}
+\item{log2p1}{Logical. If TRUE, plot log2(Expression + 1). Default TRUE.}
 
-\item{x_lab}{A character string for the x-axis label. Default is the value of \code{group_col}.}
+\item{palette}{Optional named vector for group fill colors. Names must match group levels.}
 
-\item{y_lab}{A character string for the y-axis label. Default is \code{"Log2(TMM/TPM + 1)"}.}
+\item{facet_scales}{Character, passed to \code{facet_wrap(scales=)}. Default "free_y".}
+
+\item{plot_title, x_lab, y_lab, subtitle, caption}{Character plot labels. \code{x_lab} defaults to \code{group_col}; \code{y_lab} auto-set if \code{log2p1=TRUE}.}
 }
 \value{
-A \code{ggplot} object representing a faceted boxplot with gene expression data and optional statistical annotations.
+A ggplot object (invisible).
 }
 \description{
 This function creates a faceted boxplot (with overlayed jittered points) to display gene expression
 levels for a set of genes across samples. It is designed to work with normalized count matrices such as
 TMM or TPM and allows you to add pairwise statistical comparisons (e.g., via "t.test", "wilcox.test", "anova").
 Additionally, users can customize plot title and axis labels.
-}
-\details{
-The function performs the following steps:
-\itemize{
-\item Subsets the count matrix \code{tmm} to include only the genes specified in \code{genes}.
-\item Reshapes the resulting subset into long format using \code{tibble::rownames_to_column()} and \code{tidyr::pivot_longer()}.
-\item Merges the reshaped data with \code{metadata} based on sample IDs.
-\item Converts the grouping column (specified by \code{group_col}) to a factor.
-\item Creates a faceted boxplot (one facet per gene) displaying expression levels along with jittered data points.
-\item Optionally adds statistical comparison annotations to each facet using \code{ggpubr::stat_compare_means()}.
-}
-The function is designed for use with both TMM and TPM normalized data.
-}
-\examples{
-\dontrun{
-  # Example usage:
-  # Assume 'tmm' is your normalized count matrix,
-  # 'gene_vector' is a vector containing the genes to be plotted,
-  # and 'meta' is a data frame of sample metadata.
-  # You want to compare groups "NM_IgM" vs "NWT_IgM" and "NM_NT" vs "NWT_NT"
-  plot_genes_stats(
-    tmm = tmm, 
-    genes = gene_vector, 
-    metadata = meta, 
-    group_col = "sample_complete",
-    comparisons = list(c("NM_IgM", "NWT_IgM"), c("NM_NT", "NWT_NT")),
-    test = "wilcox.test",
-    plot_title = "Expression Levels of Selected Genes",
-    x_lab = "Experimental Group",
-    y_lab = "Log2(TMM/TPM + 1)"
-  )
-}
-
 }

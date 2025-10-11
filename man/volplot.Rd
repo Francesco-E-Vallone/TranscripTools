@@ -6,26 +6,45 @@
 \usage{
 volplot(
   res,
+  p_col = "PValue",
+  logFC_col = "logFC",
+  fdr_col = "FDR",
   fdr_threshold = 0.05,
   fc_threshold = 1,
   colors = c(Up = "#FF8F8F", Down = "#30B3A9", `Not Significant` = "grey"),
-  top_n = 10
+  top_n = 10,
+  gene_col = NULL,
+  title = "Volcano plot",
+  subtitle = NULL,
+  caption = NULL,
+  x_lab = "Log2 fold change",
+  y_lab = "-log10(p-value)",
+  legend_title = NULL
 )
 }
 \arguments{
-\item{res}{A data frame of differential expression results that includes columns for log fold change (\code{logFC}),
-p-values (\code{PValue}), and significance category (\code{sign}). It is recommended to run \code{add_significance()} first.}
+\item{res}{data.frame with at least \code{logFC_col} and \code{p_col}.}
 
-\item{fdr_threshold}{Numeric, the FDR threshold used for drawing the horizontal reference line. Default is \code{0.05}.}
+\item{p_col}{Character. Column name for p-values used on y-axis. Default "PValue".}
 
-\item{fc_threshold}{Numeric, the log2 fold change threshold used for drawing vertical reference lines. Default is \code{1}.}
+\item{logFC_col}{Character. Column name for log2 fold change. Default "logFC".}
 
-\item{colors}{A named vector of colors for the significance categories. Default is \code{c("Up" = "#FF8F8F", "Down" = "#30B3A9", "Not Significant" = "grey")}.}
+\item{fdr_col}{Character. Adjusted p-value column (used to derive \code{sign} if missing). Default "FDR".}
 
-\item{top_n}{An integer specifying the number of top up‑regulated and top down‑regulated genes to label on the plot. Default is \code{10}.}
+\item{fdr_threshold}{Numeric. Threshold for horizontal line and significance logic. Default 0.05.}
+
+\item{fc_threshold}{Numeric. Threshold for vertical lines and significance logic. Default 1.}
+
+\item{colors}{Named vector mapping c("Up","Down","Not Significant") to colors.}
+
+\item{top_n}{Integer. Label top N up and top N down genes among significant rows. Default 10.}
+
+\item{gene_col}{Optional character: column with gene names; if NULL uses rownames.}
+
+\item{title, subtitle, caption, x_lab, y_lab, legend_title}{Character plot labels.}
 }
 \value{
-A \code{ggplot} object representing the volcano plot.
+A ggplot object (returned invisibly).
 }
 \description{
 This function creates a volcano plot from a differential expression results data frame.
@@ -33,15 +52,13 @@ It uses \code{ggplot2} and \code{ggrepel} to plot log2 fold changes versus -log1
 coloring points by their significance category. It also labels the top \code{top_n} up‑ and down‑regulated genes.
 }
 \details{
-The function identifies the top \code{top_n} up‑regulated genes (highest \code{logFC}) and the top \code{top_n} down‑regulated genes
-(lowest \code{logFC}) from those with p-values less than the threshold. These genes are then labeled on the plot using \code{geom_text_repel}.
-The x-axis displays log2 fold change and the y-axis shows -log10(p-value). Dashed lines indicate the significance thresholds.
-Important: run the add_significance() function prior to this one, as it is essential to have the labels of logFC direction ("Up", "Down", "Not Significant")
+Volcano plot (custom p-value column + fully customizable labels)
+
+Draws log2FC (x) vs -log10(p) (y). Lets you declare which column is the p-value,
+and customize all plot labels. If \code{sign} is absent, it will be computed using
+\code{add_significance()} with \code{fdr_col} when available (else it falls back to \code{p_col}).
 }
 \examples{
-\dontrun{
-# Assume deg_df is your differential expression results data frame and has been processed with add_significance()
-volcano_plot <- volplot(deg_df, fdr_threshold = 0.05, fc_threshold = 1, top_n = 10)
-}
-
+# p <- volplot(df, p_col="pval", logFC_col="log2FC", fdr_col="padj",
+#              title="My volcano", x_lab="log2FC", y_lab="-log10(p)")
 }

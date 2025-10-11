@@ -11,7 +11,7 @@ By default, genes with FDR &amp;lt; 0.05 and absolute logFC &amp;gt; 1 are categ
 
     <a class="navbar-brand me-2" href="../index.html">TranscripTools</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,7 @@ By default, genes with FDR &amp;lt; 0.05 and absolute logFC &amp;gt; 1 are categ
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
       </ul></div>
@@ -57,44 +58,41 @@ By default, genes with FDR &lt; 0.05 and absolute logFC &gt; 1 are categorized a
 
 
 <dl><dt id="arg-res">res<a class="anchor" aria-label="anchor" href="#arg-res"></a></dt>
-<dd><p>A data frame of differential expression results, with row names representing gene identifiers.</p></dd>
+<dd><p>data.frame of DE results (rows = genes).</p></dd>
 
 
 <dt id="arg-fdr-col">fdr_col<a class="anchor" aria-label="anchor" href="#arg-fdr-col"></a></dt>
-<dd><p>A character string specifying the name of the column that contains FDR or adjusted p-values. Default is <code>"FDR"</code>.</p></dd>
+<dd><p>Character. Column name with adjusted p-values (e.g., FDR, padj). Default "FDR".</p></dd>
 
 
 <dt id="arg-logfc-col">logFC_col<a class="anchor" aria-label="anchor" href="#arg-logfc-col"></a></dt>
-<dd><p>A character string specifying the name of the column that contains log2 fold changes. Default is <code>"logFC"</code>.</p></dd>
+<dd><p>Character. Column name with log2 fold change. Default "logFC".</p></dd>
 
 
 <dt id="arg-fdr-threshold">fdr_threshold<a class="anchor" aria-label="anchor" href="#arg-fdr-threshold"></a></dt>
-<dd><p>Numeric, threshold for statistical significance. Default is <code>0.05</code>.</p></dd>
+<dd><p>Numeric. Adjusted p-value cutoff. Default 0.05.</p></dd>
 
 
 <dt id="arg-fc-threshold">fc_threshold<a class="anchor" aria-label="anchor" href="#arg-fc-threshold"></a></dt>
-<dd><p>Numeric, threshold for absolute log2 fold change. Default is <code>1</code>.</p></dd>
+<dd><p>Numeric. Absolute log2FC cutoff. Default 1.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>The original data frame with an added column <code>sign</code> that categorizes genes as "Up", "Down", or "Not Significant".</p>
+    <p><code>res</code> with an added factor column <code>sign</code> in c("Up","Down","Not Significant").</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Genes are categorized as follows:</p><ul><li><p><strong>Up</strong>: genes with <code>logFC</code> &gt; fc_threshold and FDR &lt; fdr_threshold.</p></li>
-<li><p><strong>Down</strong>: genes with <code>logFC</code> &lt; -fc_threshold and FDR &lt; fdr_threshold.</p></li>
-<li><p><strong>Not Significant</strong>: all other genes.</p></li>
-</ul></div>
+    <p>Flag differential expression direction by thresholds</p>
+<p>Classifies each row as "Up", "Down", or "Not Significant" using a chosen
+adjusted p-value column and a log2 fold-change column.</p>
+<p>Up: logFC &gt;  fc_threshold &amp; FDR &lt; fdr_threshold
+Down: logFC &lt; -fc_threshold &amp; FDR &lt; fdr_threshold</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Assume deg_df is your differential expression results data frame:</span></span></span>
-<span class="r-in"><span><span class="va">deg_df</span> <span class="op">&lt;-</span> <span class="fu">add_significance</span><span class="op">(</span><span class="va">deg_df</span>, fdr_col <span class="op">=</span> <span class="st">"adj.P.Val"</span>, logFC_col <span class="op">=</span> <span class="st">"logFC"</span>,</span></span>
-<span class="r-in"><span>                           fdr_threshold <span class="op">=</span> <span class="fl">0.05</span>, fc_threshold <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
-<span class="r-in"><span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># df &lt;- add_significance(df, fdr_col="adj.P.Val", logFC_col="logFC", fdr_threshold=0.05, fc_threshold=1)</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -106,7 +104,7 @@ By default, genes with FDR &lt; 0.05 and absolute logFC &gt; 1 are categorized a
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>

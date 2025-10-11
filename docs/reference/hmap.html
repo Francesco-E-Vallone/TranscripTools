@@ -11,7 +11,7 @@ colors, the top annotation, and the display of row (gene names) and column names
 
     <a class="navbar-brand me-2" href="../index.html">TranscripTools</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,7 @@ colors, the top annotation, and the display of row (gene names) and column names
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
       </ul></div>
@@ -47,11 +48,10 @@ colors, the top annotation, and the display of row (gene names) and column names
 <span>  <span class="va">tmm</span>,</span>
 <span>  <span class="va">title</span>,</span>
 <span>  deg <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  heatmap_colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#5a78b3"</span>, <span class="st">"#6381b8"</span>, <span class="st">"#93b2d3"</span>, <span class="st">"#c6dbea"</span>, <span class="st">"#e7f4f2"</span>, <span class="st">"#faf0ab"</span>,</span>
-<span>    <span class="st">"#f6e298"</span>, <span class="st">"#db7d54"</span>, <span class="st">"#c14536"</span>, <span class="st">"#b9332c"</span><span class="op">)</span>,</span>
-<span>  top_annotation_df <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  top_annotation_colors <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  annotation_width <span class="op">=</span> <span class="fu">unit</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"cm"</span><span class="op">)</span>,</span>
+<span>  heatmap_colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#5a78b3"</span>, <span class="st">"#93b2d3"</span>, <span class="st">"#e7f4f2"</span>, <span class="st">"#faf0ab"</span>, <span class="st">"#db7d54"</span>, <span class="st">"#b9332c"</span><span class="op">)</span>,</span>
+<span>  metadata <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  metadata_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  annotation_colors <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  show_row_names <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  show_column_names <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -62,77 +62,42 @@ colors, the top annotation, and the display of row (gene names) and column names
 
 
 <dl><dt id="arg-tmm">tmm<a class="anchor" aria-label="anchor" href="#arg-tmm"></a></dt>
-<dd><p>A numeric matrix or data frame with row names representing genes.</p></dd>
+<dd><p>Numeric matrix or data.frame (rows = genes, cols = samples).</p></dd>
 
 
 <dt id="arg-title">title<a class="anchor" aria-label="anchor" href="#arg-title"></a></dt>
-<dd><p>A character string to be used as the heatmap's column title.</p></dd>
+<dd><p>Character. Heatmap title.</p></dd>
 
 
 <dt id="arg-deg">deg<a class="anchor" aria-label="anchor" href="#arg-deg"></a></dt>
-<dd><p>An optional character vector of gene names. If provided, only the rows (genes) present in <code>deg</code> will be used.
-If <code>NULL</code> (default), the heatmap will be created using all rows in <code>tmm</code>.</p></dd>
+<dd><p>Optional character vector of genes to include.</p></dd>
 
 
 <dt id="arg-heatmap-colors">heatmap_colors<a class="anchor" aria-label="anchor" href="#arg-heatmap-colors"></a></dt>
-<dd><p>A character vector specifying the color palette for the heatmap. Default is a blue-to-red gradient.</p></dd>
+<dd><p>Color vector for the heatmap gradient.</p></dd>
 
 
-<dt id="arg-top-annotation-df">top_annotation_df<a class="anchor" aria-label="anchor" href="#arg-top-annotation-df"></a></dt>
-<dd><p>An optional data frame for top annotation (for example, sample grouping information). If provided,
-it will be used to annotate columns; if <code>NULL</code> (default) and a global <code>metadata$samples</code> exists, that will be used.</p></dd>
+<dt id="arg-metadata">metadata<a class="anchor" aria-label="anchor" href="#arg-metadata"></a></dt>
+<dd><p>Data frame with sample metadata (rows = samples).</p></dd>
 
 
-<dt id="arg-top-annotation-colors">top_annotation_colors<a class="anchor" aria-label="anchor" href="#arg-top-annotation-colors"></a></dt>
-<dd><p>An optional named list of colors for the annotation. If <code>NULL</code> (default), the annotation
-will use the default (random) colors.</p></dd>
+<dt id="arg-metadata-col">metadata_col<a class="anchor" aria-label="anchor" href="#arg-metadata-col"></a></dt>
+<dd><p>Character. Column in <code>metadata</code> to use for top annotation.</p></dd>
 
 
-<dt id="arg-annotation-width">annotation_width<a class="anchor" aria-label="anchor" href="#arg-annotation-width"></a></dt>
-<dd><p>A <code>unit</code> object specifying the annotation width. Default is <code>unit(c(1, 4), 'cm')</code>.</p></dd>
+<dt id="arg-annotation-colors">annotation_colors<a class="anchor" aria-label="anchor" href="#arg-annotation-colors"></a></dt>
+<dd><p>Optional named vector for annotation levels.</p></dd>
 
 
-<dt id="arg-show-row-names">show_row_names<a class="anchor" aria-label="anchor" href="#arg-show-row-names"></a></dt>
-<dd><p>Logical. Whether to display row (gene) names on the heatmap. Default is <code>FALSE</code>.</p></dd>
-
-
-<dt id="arg-show-column-names">show_column_names<a class="anchor" aria-label="anchor" href="#arg-show-column-names"></a></dt>
-<dd><p>Logical. Whether to display column names on the heatmap. Default is <code>FALSE</code>.</p></dd>
+<dt id="arg-show-row-names-show-column-names">show_row_names, show_column_names<a class="anchor" aria-label="anchor" href="#arg-show-row-names-show-column-names"></a></dt>
+<dd><p>Logical. Show gene/sample names. Default FALSE.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>Heatmap</code> object (from the ComplexHeatmap package) that is drawn and returned.</p>
+    <p>A <code><a href="https://rdrr.io/pkg/ComplexHeatmap/man/Heatmap.html" class="external-link">ComplexHeatmap::Heatmap</a></code> object (drawn and returned invisibly).</p>
     </div>
-    <div class="section level2">
-    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The function performs the following steps:</p><ul><li><p>Optionally subsets the count matrix <code>tmm</code> to include only rows with gene names in <code>deg</code> (if provided).</p></li>
-<li><p>Computes z-scores for each gene across samples.</p></li>
-<li><p>Creates a top annotation if <code>top_annotation_df</code> is provided. If <code>top_annotation_colors</code> is also provided,
-it is used; otherwise, default colors are applied.</p></li>
-<li><p>Draws a heatmap using the <code>Heatmap</code> function from the ComplexHeatmap package with user-specified options for
-displaying row and column names.</p></li>
-</ul></div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Example: Create a heatmap using all genes</span></span></span>
-<span class="r-in"><span><span class="va">ht_all</span> <span class="op">&lt;-</span> <span class="fu">hmap</span><span class="op">(</span><span class="va">tmm_avg</span>, title <span class="op">=</span> <span class="st">"Heatmap of All Genes"</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Example: Create a heatmap using only a subset of DEGs, with custom annotation colors and showing column names:</span></span></span>
-<span class="r-in"><span><span class="va">deg_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">res_PB_vs_all</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">custom_colors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>samples <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"NM_IgM"</span> <span class="op">=</span> <span class="st">"darkred"</span>, <span class="st">"NM_NT"</span> <span class="op">=</span> <span class="st">"darkorange"</span>, </span></span>
-<span class="r-in"><span>                                  <span class="st">"NWT_IgM"</span> <span class="op">=</span> <span class="st">"darkblue"</span>, <span class="st">"NWT_NT"</span> <span class="op">=</span> <span class="st">"lightblue"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">ht_deg</span> <span class="op">&lt;-</span> <span class="fu">hmap</span><span class="op">(</span><span class="va">tmm_avg</span>, title <span class="op">=</span> <span class="st">"PB vs ALL - DEGs"</span>, deg <span class="op">=</span> <span class="va">deg_genes</span>,</span></span>
-<span class="r-in"><span>               heatmap_colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#4575b4"</span>, <span class="st">"#91bfdb"</span>, <span class="st">"#e0f3f8"</span>, <span class="st">"#fee090"</span>, <span class="st">"#fc8d59"</span>, <span class="st">"#d73027"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>               top_annotation_df <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>samples <span class="op">=</span> <span class="va">metadata</span><span class="op">$</span><span class="va">samples</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>               top_annotation_colors <span class="op">=</span> <span class="va">custom_colors</span>,</span></span>
-<span class="r-in"><span>               show_column_names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -142,7 +107,7 @@ displaying row and column names.</p></li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>
