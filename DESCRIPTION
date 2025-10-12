@@ -13,16 +13,18 @@ Imports:
     tidyr,
     reshape2,
     ggrepel,
-    PCAtools,
     enrichR,
     svglite,
     ggpubr,
     tibble,
     rlang,
+    PCAtools,
     rstatix
 Suggests:
     roxygen2,
     knitr,
     rmarkdown
+Remotes:
+    bioc::PCAtools
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3

@@ -34,6 +34,10 @@
 #' @import ggplot2
 #' @export
 pcafun <- function(counts, metadata, title, colby = "samples", shapekey = NULL, showLoadings = TRUE) {
+  #check if dependency is present
+  if (!requireNamespace("PCAtools", quietly = TRUE)) {
+    stop("PCAtools is required for pcafun(). Install via Bioconductor: BiocManager::install('PCAtools')")
+  }
   #perform PCA using PCAtools::pca
   p <- PCAtools::pca(counts, metadata = metadata)
   
