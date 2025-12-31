@@ -11,8 +11,8 @@
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Streamlined RNA-seq Data Manipulation and Analysis">
-<meta name="description" content="TranscripTools simplifies RNA-seq analysis with intuitive functions for differential gene expression, visualization, functional enrichment, and PCA. Designed for efficiency and reproducibility, it reduces complex workflows to a few lines of code.">
-<meta property="og:description" content="TranscripTools simplifies RNA-seq analysis with intuitive functions for differential gene expression, visualization, functional enrichment, and PCA. Designed for efficiency and reproducibility, it reduces complex workflows to a few lines of code.">
+<meta name="description" content="TranscripTools provides lightweight helper functions for bulk RNA-seq workflows, built to speed up analyses that involve multiple differential expression comparisons. It includes utilities to filter and annotate DE results, generate common plots (volcano, heatmap, PCA), run enrichment analysis wrappers, and export nested results to analysis-ready tables for reporting.">
+<meta property="og:description" content="TranscripTools provides lightweight helper functions for bulk RNA-seq workflows, built to speed up analyses that involve multiple differential expression comparisons. It includes utilities to filter and annotate DE results, generate common plots (volcano, heatmap, PCA), run enrichment analysis wrappers, and export nested results to analysis-ready tables for reporting.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">TranscripTools</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,30 +46,49 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header"><h1 align="center">
-TranscriptTools
 </h1></div>
+<p>TranscripTools</p>
+
 <p align="center">
-<img src="Tlogo.png" alt="" width="400"></p>
-<p><code>TranscripTools</code> is an R package designed to streamline bulk RNA-seq analysis by providing convenient functions for commonly used tasks such as PCA, heatmaps, and other exploratory and visualization techniques. The package aims to reduce repetitive coding, improve workflow efficiency, and make RNA-seq data exploration more accessible.</p>
-<p>As <code>TranscripTools</code> is under active development, and new features are being added. Users are welcome to explore, test, and provide feedback.</p>
-<p>Open to collaborations to further improve the package!</p>
+</p>
+<p><img src="reference/figures/Tlogo.png" alt="TranscripTools logo" width="400"></p>
+
+<p>TranscripTools is an R package born out of practical necessity. It collects a set of lightweight helper functions for bulk RNA-seq analyses, developed while working on multiple projects with many differential expression comparisons per project.</p>
+<p>The package focuses on common but repetitive tasks: handling and filtering differential expression results, generating quick and consistent visualizations (volcano plots, heatmaps, PCA), running basic enrichment analyses, and exporting results in analysis-ready formats for reporting. While it was developed for the author’s projects, the same workflow pattern shows up in many labs—especially when you need to inspect and report results across multiple comparisons.</p>
+<p>This is not intended to be a general-purpose framework. It is a personal research toolbox, built to reduce repetitive code, keep analyses readable, and make it easier to iterate over many contrasts without rewriting the same logic every time. Improving reproducibility comes as a consequence of having fewer ad-hoc scripts and more consistent interfaces.</p>
+<p>TranscripTools is under active development; while it was built around personal workflows, it is meant to be useful to anyone running bulk RNA-seq analyses, especially when working through many comparisons.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<div class="section level3">
-<h3 id="install-from-github">Install from GitHub<a class="anchor" aria-label="anchor" href="#install-from-github"></a>
-</h3>
-<p>To install the development version of <strong>TranscripTools</strong> from GitHub, run:</p>
-<p>#Install devtools if needed <code>if (!requireNamespace("devtools", quietly = TRUE))</code> <code>install.packages("devtools")</code></p>
-<p>#Install TranscripTools from GitHub <code>devtools::install_github("Francesco-E-Vallone/TranscripTools")</code></p>
-<p>#Load the package <code><a href="https://rdrr.io/r/base/library.html" class="external-link">library(TranscripTools)</a></code></p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">#Install devtools if needed</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"devtools"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"devtools"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">#Install TranscripTools from GitHub</span></span>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"Francesco-E-Vallone/TranscripTools"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">#Load the package</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">TranscripTools</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">#Optional: PCA plotting requires PCAtools (Bioconductor)</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"BiocManager"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span>
+<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="st">"PCAtools"</span><span class="op">)</span></span></code></pre></div>
 </div>
+<div class="section level1">
+<h1 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
+</h1>
+<p>Function reference and examples are available via the pkgdown site:</p>
+<p><a href="https://francesco-e-vallone.github.io/TranscripTools/" class="external-link uri">https://francesco-e-vallone.github.io/TranscripTools/</a></p>
 </div>
+<div class="section level1">
+<h1 id="collaboration">Collaboration<a class="anchor" aria-label="anchor" href="#collaboration"></a>
+</h1>
+<p>This package is openly developed. If you find it useful, have suggestions, or want to collaborate on extending or refining parts of it, feel free to get in touch! :)</p>
 <div class="section level2">
-<h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
+<h2 id="note-on-ai-assistance">Note on AI assistance<a class="anchor" aria-label="anchor" href="#note-on-ai-assistance"></a>
 </h2>
-<p>For full package documentation and examples, visit the website:</p>
-<p><a href="https://francesco-e-vallone.github.io/TranscripTools/" class="external-link">TranscripTools Documentation</a></p>
+<p>Some documentation text and examples were drafted with the help of a large language model (LLM) and then reviewed and edited by the author. The code, design choices, and final responsibility for the package remain the author’s.</p>
+</div>
 </div>
 
   </main><aside class="col-md-3"><div class="license">
@@ -107,7 +126,7 @@ TranscriptTools
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>
