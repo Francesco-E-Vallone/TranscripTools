@@ -51,7 +51,6 @@
 #'              showLoadings = FALSE)
 #' }
 #'
-#' @import PCAtools
 #' @import ggplot2
 #' @export
 pcafun <- function(counts,
