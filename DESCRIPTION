@@ -22,13 +22,11 @@ Imports:
     ggpubr,
     tibble,
     rlang,
-    PCAtools,
     rstatix
 Suggests:
     roxygen2,
     knitr,
+    PCAtools,
     rmarkdown
-Remotes:
-    bioc::PCAtools
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
