@@ -35,8 +35,9 @@ library(TranscripTools)
 # - Heatmaps: ComplexHeatmap
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 BiocManager::install(c("PCAtools", "ComplexHeatmap"))
+```
 
-# Documentation
+## Documentation
 
 Function reference and examples are available via the pkgdown site:
 
@@ -50,9 +51,9 @@ If you want to see how the functions in TranscripTools fit together, start from 
 It’s written as a practical “how I run it” guide (no toy dataset included): it walks through a typical bulk RNA-seq downstream loop with multiple contrasts; from DE results to PCA, DEG filtering, enrichment/pathway steps, focused gene exploration, visualization, and export.
 
  **Practical analysis workflow (minimal)**  
-https://francesco-e-vallone.github.io/TranscripTools/articles/transcriptools-workflow.html
+https://francesco-e-vallone.github.io/TranscripTools/articles/TranscripTools_workflow.html
 
-# Collaboration
+## Collaboration
 
 This package is openly developed. If you find it useful, have suggestions, or want to collaborate on extending or refining parts of it, feel free to get in touch! :)
 

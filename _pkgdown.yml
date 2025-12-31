@@ -1,4 +1,9 @@
 url: https://francesco-e-vallone.github.io/TranscripTools/
 template:
   bootstrap: 5
-  
+
+articles:
+  - title: Workflow
+    contents:
+      - TranscripTools_workflow
+      
