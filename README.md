@@ -21,21 +21,18 @@ TranscripTools is under active development; while it was built around personal w
 ## Installation
 
 ```r
-# Install devtools if needed
+#Install devtools if needed
 if (!requireNamespace("devtools", quietly = TRUE)) install.packages("devtools")
 
-# Install TranscripTools from GitHub
+#Install TranscripTools from GitHub
 devtools::install_github("Francesco-E-Vallone/TranscripTools")
 
-# Load the package
+#Load the package
 library(TranscripTools)
 
-# Optional: PCA plotting requires PCAtools (Bioconductor)
+#Optional: PCA plotting requires PCAtools (Bioconductor)
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 BiocManager::install("PCAtools")
-# Optional: PCA plotting requires PCAtools (Bioconductor)
-
-if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager") BiocManager::install("PCAtools")
 ```
 
 # Documentation
