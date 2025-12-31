@@ -7,30 +7,27 @@
 prep_go_exp(go_list)
 }
 \arguments{
-\item{go_list}{A named list of GO analysis results. Each element of \code{go_list} should itself be a list of data frames,
-each corresponding to a different database or comparison.}
+\item{go_list}{A named list of GO analysis results. Each element of \code{go_list} should itself be a named list
+of data frames (or tibbles). Names should indicate database and direction (e.g. \code{"Reactome_Pathways_2024_Down"}).}
 }
 \value{
-A named list of data frames. Each data frame contains an additional column \code{Database} that indicates
-the source of the data.
+A named list of data frames. Each data frame contains an additional column \code{Database} indicating
+the source of each row (taken from the nested list names).
 }
 \description{
-This function takes a nested list of GO analysis results and, for each category, combines the contained data frames
-into a single data frame by row-binding them. A new column \code{Database} is added to indicate the source of each record.
-The resulting list is suitable for export to an Excel workbook (using packages like \code{writexl}), where each element becomes a separate sheet.
+This function takes a nested list of GO analysis results and, for each comparison/category,
+combines the contained data frames into a single data frame by row-binding them.
+A new column \code{Database} is added (from the names of the nested list elements) to indicate
+the source database and direction (e.g. \code{"GO_Biological_Process_2025_UP"}).
 }
 \details{
-For each category in \code{go_list}, the function assigns standardized names to the nested data frames,
-then uses \code{dplyr::bind_rows} (within an \code{lapply} loop) to combine them into a single data frame.
-This approach avoids explicit loops and improves efficiency over more verbose iterative methods.
+Unlike earlier versions, this function does \strong{not} overwrite names with a fixed template.
+This makes it robust to missing databases (very common in GO analyses) and prevents silent mislabeling.
 }
 \examples{
 \dontrun{
-  # Assume go_list is a nested list of GO results from various comparisons:
-  combined_go_list <- prep_go_exp(go_list)
-
-  # Export to an Excel file where each list element becomes a separate sheet:
-  writexl::write_xlsx(combined_go_list, "GO_Analysis_Results.xlsx")
+combined_go_list <- prep_go_exp(go_list)
+writexl::write_xlsx(combined_go_list, "GO_Analysis_Results.xlsx")
 }
 
 }

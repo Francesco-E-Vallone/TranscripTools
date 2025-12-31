@@ -1,9 +1,13 @@
 Package: TranscripTools
 Title: Streamlined RNA-seq Data Manipulation and Analysis
-Version: 0.3.0
+Version: 0.4.0
 Authors@R: 
     person("Francesco Edoardo Vallone", email = "francesco.edo.vallone@gmail.com", role = c("aut", "cre"))
-Description: TranscripTools simplifies RNA-seq analysis with intuitive functions for differential gene expression, visualization, functional enrichment, and PCA. Designed for efficiency and reproducibility, it reduces complex workflows to a few lines of code.
+Description: TranscripTools provides lightweight helper functions for bulk RNA-seq workflows,
+ built to speed up analyses that involve multiple differential expression
+ comparisons. It includes utilities to filter and annotate DE results, generate
+ common plots (volcano, heatmap, PCA), run enrichment analysis wrappers, and
+ export nested results to analysis-ready tables for reporting.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Imports:

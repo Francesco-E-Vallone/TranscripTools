@@ -47,107 +47,177 @@
 
 #' @export
 create_df <- function(raw_counts, files) {
-  #looping for each file
+  if (!is.data.frame(raw_counts)) raw_counts <- as.data.frame(raw_counts)
+  
   for (file in files) {
-    print(paste("processing: ", file)) # Debug message
-    data <- read.delim(file, header = FALSE)
-
-    #setting proper names based on the file's base name
+    message("processing: ", file)
+    data <- utils::read.delim(file, header = FALSE)
+    
     file_name <- basename(file)
-    colnames(data) <- c(paste0("genes_", file_name), paste0("counts_", file_name))
-
-    #setting row names so that files can be appended by matching gene names
-    rownames(data) <- data[,1]
-
-    #appending the new data columns without overwriting existing ones
-    raw_counts <- bind_cols(raw_counts, data)
+    colnames(data) <- c("gene", paste0("counts_", file_name))
+    data <- data[!is.na(data$gene), , drop = FALSE]
+    rownames(data) <- data$gene
+    data$gene <- NULL
+    
+    #merge by rownames (gene IDs)
+    raw_counts <- merge(
+      raw_counts,
+      data,
+      by = "row.names",
+      all = TRUE,
+      sort = FALSE
+    )
+    rownames(raw_counts) <- raw_counts$Row.names
+    raw_counts$Row.names <- NULL
   }
-
-  #retaining only columns that start with "counts"
-  to_retain <- grep("^counts", colnames(raw_counts), value = TRUE)
-  raw_counts <- raw_counts[, colnames(raw_counts) %in% to_retain]
-
-  #removing rows for genes labeled as "no_feature" or "ambiguous", if present
-  to_remove <- c("no_feature", "ambiguous")
-  raw_counts <- raw_counts[!(rownames(raw_counts) %in% to_remove), ]
-
-  return(raw_counts)
+  
+  #keep only counts_*
+  raw_counts <- raw_counts[, grep("^counts_", colnames(raw_counts)), drop = FALSE]
+  
+  #common featureCounts extra rows (optional)
+  raw_counts <- raw_counts[!(rownames(raw_counts) %in% c("no_feature","ambiguous","too_low_aQual","not_aligned","alignment_not_unique")), , drop = FALSE]
+  
+  raw_counts
 }
 
 #' Select Statistically Significant Differentially Expressed Genes
 #'
-#' This function processes a named list of differential gene expression (DGE) data frames and filters each
-#' data frame to retain only those genes that are statistically significant based on a specified significance 
-#' column and a log fold-change threshold. This is useful for selecting the most differentially expressed genes 
-#' across multiple analyses.
+#' Filters differential expression (DE) results by statistical significance and
+#' absolute log fold-change. The input can be either:
+#' \itemize{
+#'   \item a single data frame of DE results, or
+#'   \item a named (or unnamed) list of DE result data frames (e.g. one per contrast).
+#' }
 #'
-#' @param dge_list A named list of data frames, each containing DGE results. Each data frame should have a numeric column 
-#'   for significance (e.g., p-value or adjusted p-value) and a \code{logFC} column indicating the log fold-change.
-#' @param stat_sign A character string specifying the name of the significance column (e.g., `"p.value"` or `"adj.P.Val"`)
-#'   used to determine statistical significance.
-#' @param logFC_threshold A numeric value specifying the threshold for the absolute log fold-change.
-#'   Only genes with \code{logFC} greater than or equal to this threshold (or less than or equal to the negative 
-#'   of this threshold) will be retained. Default is \code{1}.
+#' @param dge A data frame of DE results or a list of data frames.
+#'   Each data frame must contain:
+#'   \itemize{
+#'     \item a significance column (specified by \code{stat_sign})
+#'     \item a \code{logFC} column (log fold-change)
+#'   }
+#' @param stat_sign Character string. Name of the significance column
+#'   (e.g., \code{"p.value"}, \code{"adj.P.Val"}, \code{"padj"}).
+#' @param p_threshold Numeric. Significance cutoff applied to \code{stat_sign}.
+#'   Default is \code{0.05}.
+#' @param logFC_threshold Numeric. Absolute log fold-change cutoff.
+#'   Genes are kept when \code{abs(logFC) >= logFC_threshold}. Default is \code{1}.
+#' @param keep_empty Logical. If \code{TRUE}, keeps empty filtered data frames in the output
+#'   (useful when you want to preserve the full set of contrasts). If \code{FALSE} (default),
+#'   drops empty results.
 #'
-#' @return A named list of data frames, where each data frame contains only the statistically significant genes from 
-#'   the corresponding element in \code{dge_list}. Any element of \code{dge_list} that is empty or lacks the specified 
-#'   columns is skipped.
+#' @return If \code{dge} is a data frame, returns a filtered data frame.
+#' If \code{dge} is a list, returns a list of filtered data frames.
+#' Elements that are not data frames or that lack required columns are skipped with a warning.
 #'
 #' @details
-#' The function loops over each element in \code{dge_list} and for each one:
+#' The function:
 #' \itemize{
-#'   \item Checks if the data frame is empty; if so, it moves on to the next element.
-#'   \item Verifies that both the significance column (given by \code{stat_sign}) and the \code{logFC} column are present.
-#'   \item Filters the data frame to retain only those genes for which the significance value is less than 0.05 and 
-#'         the absolute value of \code{logFC} is greater than or equal to \code{logFC_threshold}.
+#'   \item Removes rows with \code{NA} in either \code{stat_sign} or \code{logFC}.
+#'   \item Filters rows with \code{dge[[stat_sign]] < p_threshold}.
+#'   \item Filters rows with \code{abs(logFC) >= logFC_threshold}.
 #' }
 #'
 #' @examples
 #' \dontrun{
-#' # Example: Suppose you have a list of DGE results:
 #' dge_list <- list(
 #'   condition1 = data.frame(p.value = runif(100), logFC = rnorm(100)),
 #'   condition2 = data.frame(p.value = runif(100), logFC = rnorm(100))
 #' )
 #'
-#' # Filter the list using "p.value" as the significance column and a logFC threshold of 1
 #' filtered_list <- select_stat_sign(dge_list, stat_sign = "p.value", logFC_threshold = 1)
+#'
+#' # Single data.frame also works:
+#' filtered_df <- select_stat_sign(dge_list$condition1, stat_sign = "p.value", logFC_threshold = 1)
 #' }
 #'
 #' @export
-select_stat_sign <- function(dge_list, stat_sign, logFC_threshold = 1) {
-  #create an empty list to store filtered results
-  filt_res <- list()
+select_stat_sign <- function(
+    dge,
+    stat_sign,
+    p_threshold = 0.05,
+    logFC_threshold = 1,
+    keep_empty = FALSE
+) {
   
-  #loop over each element (by name) in dge_list
-  for (res_name in names(dge_list)) {
-    df <- dge_list[[res_name]]
+  # ---- internal worker: filter ONE data.frame ----
+  filter_one <- function(df, label = NULL) {
     
-    #skip if the data frame is empty
-    if (nrow(df) == 0) {
-      next
+    label_safe <- if (!is.null(label) && !is.na(label) && nzchar(label)) label else "<unnamed>"
+    
+    if (!is.data.frame(df)) {
+      warning(sprintf("Skipping '%s': element is not a data.frame", label_safe))
+      return(NULL)
     }
     
-    #check that the specified significance column and the "logFC" column exist
+    # If empty input, return it as-is; keep/drop decision handled by caller
+    if (nrow(df) == 0) {
+      return(df)
+    }
+    
+    # Required columns
     if (!(stat_sign %in% colnames(df))) {
-      warning(sprintf("Skipping '%s': Column '%s' not found", res_name, stat_sign))
-      next
+      warning(sprintf("Skipping '%s': column '%s' not found", label_safe, stat_sign))
+      return(NULL)
     }
     if (!("logFC" %in% colnames(df))) {
-      warning(sprintf("Skipping '%s': Column 'logFC' not found", res_name))
-      next
+      warning(sprintf("Skipping '%s': column 'logFC' not found", label_safe))
+      return(NULL)
     }
     
-    #filter the data frame based on the significance threshold and log fold-change threshold
-    df_filtered <- df[df[[stat_sign]] < 0.05 & (df$logFC >= logFC_threshold | df$logFC <= -logFC_threshold), ]
+    # Drop NA rows in required fields (keeps filtering deterministic)
+    ok <- !is.na(df[[stat_sign]]) & !is.na(df[["logFC"]])
+    df <- df[ok, , drop = FALSE]
     
-    #sdd the filtered data frame to the result list under the same name
-    filt_res[[res_name]] <- df_filtered
+    # Apply thresholds
+    df_filtered <- df[df[[stat_sign]] < p_threshold & abs(df[["logFC"]]) >= logFC_threshold, , drop = FALSE]
+    
+    df_filtered
   }
   
-  return(filt_res)
+  # ---- Case 1: list input (note: data.frame is also a list, so check !is.data.frame) ----
+  if (is.list(dge) && !is.data.frame(dge)) {
+    
+    nms <- names(dge)
+    if (is.null(nms)) {
+      # keep structure even if unnamed
+      nms <- rep("", length(dge))
+    }
+    
+    out <- vector("list", length(dge))
+    
+    for (i in seq_along(dge)) {
+      out[[i]] <- filter_one(dge[[i]], label = nms[[i]])
+    }
+    
+    # restore names only if there were any meaningful names
+    if (!all(nms == "")) names(out) <- nms
+    
+    # drop NULLs (invalid inputs / missing columns)
+    out <- out[!vapply(out, is.null, logical(1))]
+    
+    # optionally drop empty filtered results
+    if (!keep_empty) {
+      out <- out[vapply(out, nrow, integer(1)) > 0]
+    }
+    
+    return(out)
+  }
+  
+  # ---- Case 2: single data.frame input ----
+  if (is.data.frame(dge)) {
+    res <- filter_one(dge, label = "dge")
+    if (is.null(res)) {
+      stop("Input data.frame is missing required columns; see warnings.")
+    }
+    if (!keep_empty && nrow(res) == 0) {
+      # For single df, returning empty is fine; keep_empty mainly matters for list
+      return(res)
+    }
+    return(res)
+  }
+  
+  stop("`dge` must be a data.frame or a list of data.frames.")
 }
-
 
 
 #' Filter TPM Data by Pathway and Differential Expression

@@ -204,6 +204,10 @@ down_go <- function(df, samples,
 #' @import svglite
 #' @export
 save_plot <- function(plot_list, list_name, path = "results/", device = "svg", height = 7, width = 15) {
+  #check if dir exists
+  if (!dir.exists(path)) dir.create(path, recursive = TRUE)
+  
+  #looping for each name of the plot list
   for (i in names(plot_list)) {
     ggplot2::ggsave(filename = paste0(path, list_name, "_", i, ".", device),
                     plot = plot_list[[i]],
@@ -215,153 +219,218 @@ save_plot <- function(plot_list, list_name, path = "results/", device = "svg", h
 
 #' Build a Nested List of GO Analysis Results for Export
 #'
-#' This function creates a nested list of GO analysis results for multiple comparisons by combining
-#' up-regulated and down-regulated results. It expects two named lists: one with up-regulated GO results and one
-#' with down-regulated GO results. For each comparison, it extracts the specified databases from both lists and
-#' converts the results into data frames. The output is a nested list where each top-level element corresponds to a
-#' comparison and contains a named list of data frames, with names indicating both the database and the regulation direction
-#' (e.g., \code{"MSigDB_Hallmarks_UP"}).
+#' Combines up- and down-regulated GO/enrichment results into a nested list suitable for export.
+#' Missing comparisons (e.g. only UP available) and missing databases are allowed.
 #'
-#' @param up_list A named list of GO analysis results for up-regulated genes. Each element should itself be a list
-#'   with one entry per database. Each database entry must contain a \code{$data} element.
-#' @param down_list A named list of GO analysis results for down-regulated genes. Each element should have the same
-#'   structure as \code{up_list}.
-#' @param databases A character vector of database names to extract from each result. Default is:
-#'   \code{c("MSigDB_Hallmarks", "GO_Biological_Process_2023", "BioPlanet_2019",
-#'   "GO_Cellular_Component_2023", "Reactome_Pathways_2024")} for continuity with up_go() and down_go() functions.
-#'
-#' @return A named list of data frames. Each element corresponds to a comparison and is itself a list
-#'   of data frames. Each data frame is named to indicate the source database and whether it corresponds
-#'   to up- or down-regulated genes.
-#'
-#' @details
-#' For each comparison (the names that are common between \code{up_list} and \code{down_list}),
-#' the function performs the following steps:
+#' Input can be either:
 #' \itemize{
-#'   \item Iterates over the specified \code{databases} for the up-regulated results and converts the result (stored in \code{$data})
-#'         into a data frame, naming it with a suffix \code{"_UP"}.
-#'   \item Iterates over the specified \code{databases} for the down-regulated results and converts these similarly,
-#'         naming them with a suffix \code{"_Down"}.
-#'   \item Combines these into a single list for that comparison.
+#'   \item Multi-comparison: \code{list(comparison -> list(database -> result))}
+#'   \item Single-comparison: \code{list(database -> result)}
 #' }
-#' This nested list can be further processed or exported (for example, with \code{writexl::write_xlsx}, where each top-level
-#' element becomes a separate sheet).
 #'
-#' @examples
-#' \dontrun{
-#'   # Assume you have two named lists, one for up-regulated and one for down-regulated GO results:
-#'   # Each result object (e.g., up_PB_vs_all) contains entries like up_PB_vs_all[["MSigDB_Hallmarks"]]
-#'   # with a 'data' field.
-#'   up_list <- list(
-#'     PB_vs_all = list(
-#'       MSigDB_Hallmarks = up_PB_vs_all$MSigDB_Hallmarks,
-#'       GO_Biological_Process_2023 = up_PB_vs_all$GO_Biological_Process_2023,
-#'       BioPlanet_2019 = up_PB_vs_all$BioPlanet_2019,
-#'       GO_Cellular_Component_2023 = up_PB_vs_all$GO_Cellular_Component_2023,
-#'       Reactome_Pathways_2024 = up_PB_vs_all$Reactome_Pathways_2024
-#'     ),
-#'     PB_vs_KLS = list(
-#'       MSigDB_Hallmarks = up_PB_vs_OT$MSigDB_Hallmarks,
-#'       GO_Biological_Process_2023 = up_PB_vs_OT$GO_Biological_Process_2023,
-#'       BioPlanet_2019 = up_PB_vs_OT$BioPlanet_2019,
-#'       GO_Cellular_Component_2023 = up_PB_vs_OT$GO_Cellular_Component_2023,
-#'       Reactome_Pathways_2024 = up_PB_vs_OT$Reactome_Pathways_2024
-#'     )
-#'   )
-#'
-#'   down_list <- list(
-#'     PB_vs_all = list(
-#'       MSigDB_Hallmarks = down_PB_vs_all$MSigDB_Hallmarks,
-#'       GO_Biological_Process_2023 = down_PB_vs_all$GO_Biological_Process_2023,
-#'       BioPlanet_2019 = down_PB_vs_all$BioPlanet_2019,
-#'       GO_Cellular_Component_2023 = down_PB_vs_all$GO_Cellular_Component_2023,
-#'       Reactome_Pathways_2024 = down_PB_vs_all$Reactome_Pathways_2024
-#'     ),
-#'     PB_vs_KLS = list(
-#'       MSigDB_Hallmarks = down_PB_vs_OT$MSigDB_Hallmarks,
-#'       GO_Biological_Process_2023 = down_PB_vs_OT$GO_Biological_Process_2023,
-#'       BioPlanet_2019 = down_PB_vs_OT$BioPlanet_2019,
-#'       GO_Cellular_Component_2023 = down_PB_vs_OT$GO_Cellular_Component_2023,
-#'       Reactome_Pathways_2024 = down_PB_vs_OT$Reactome_Pathways_2024
-#'     )
-#'   )
-#'
-#'   # Build the nested GO list:
-#'   go_list <- build_go_list(up_list, down_list)
+#' Each database result can be:
+#' \itemize{
+#'   \item a data.frame (already extracted), or
+#'   \item a list-like object containing \code{$data} (your original assumption).
 #' }
+#'
+#' @param up_list Up-regulated results (single-comparison or multi-comparison list).
+#' @param down_list Down-regulated results (single-comparison or multi-comparison list).
+#' @param databases Character vector of database names to extract.
+#' @param comparison_name Name to use if a single-comparison structure is supplied.
+#' @param keep_empty Logical. If TRUE (default), missing db/direction becomes empty data.frame
+#'   so structure is stable for Excel export. If FALSE, missing/empty entries are omitted.
+#' @param warn Logical. If TRUE (default), warn when results are missing/malformed.
+#'
+#' @return A nested list where each top-level element is a \code{comparison} and
+#' contains names like \code{paste0(db, "_UP")} and \code{paste0(db, "_Down")}.
 #'
 #' @export
-build_go_list <- function(up_list, down_list,
-                          databases = c("MSigDB_Hallmarks", "GO_Biological_Process_2023",
-                                        "BioPlanet_2019", "GO_Cellular_Component_2023", "Reactome_Pathways_2024")) {
-  #identify comparisons common to both lists
-  comparisons <- intersect(names(up_list), names(down_list))
-  go_list <- setNames(vector("list", length(comparisons)), comparisons)
-
+build_go_list <- function(
+    up_list,
+    down_list,
+    databases,
+    comparison_name = "comparison1",
+    keep_empty = TRUE,
+    warn = TRUE
+) {
+  
+  if (!is.list(up_list) || !is.list(down_list)) {
+    stop("`up_list` and `down_list` must be lists.")
+  }
+  
+  empty_df <- function() data.frame()
+  
+  #detect "single comparison" db-level lists by name overlap with databases
+  is_single_comparison <- function(x, dbs) {
+    is.list(x) && !is.null(names(x)) && any(names(x) %in% dbs)
+  }
+  
+  #extract a data.frame from a db entry:
+  # - if already a data.frame -> use it
+  # - else if has $data -> as.data.frame($data)
+  # - else -> missing
+  extract_df <- function(obj, comp, db, suffix) {
+    label <- paste0("'", comp, "' / '", db, "_", suffix, "'")
+    
+    if (is.null(obj)) {
+      if (warn) warning("Missing result for ", label)
+      return(if (keep_empty) empty_df() else NULL)
+    }
+    
+    if (is.data.frame(obj)) {
+      return(if (nrow(obj) == 0 && keep_empty) empty_df() else if (nrow(obj) == 0) NULL else obj)
+    }
+    
+    #accept tibbles etc.
+    if (inherits(obj, "tbl_df")) {
+      obj <- as.data.frame(obj)
+      return(if (nrow(obj) == 0 && keep_empty) empty_df() else if (nrow(obj) == 0) NULL else obj)
+    }
+    
+    #obj$data
+    if (is.list(obj) && !is.null(obj$data)) {
+      df <- as.data.frame(obj$data)
+      if (is.null(df) || nrow(df) == 0) return(if (keep_empty) empty_df() else NULL)
+      return(df)
+    }
+    
+    if (warn) warning("Unrecognized object (no data.frame, no $data) for ", label)
+    if (keep_empty) empty_df() else NULL
+  }
+  
+  #normalize single-comparison inputs to multi-comparison form
+  if (is_single_comparison(up_list, databases)) {
+    up_list <- setNames(list(up_list), comparison_name)
+  }
+  if (is_single_comparison(down_list, databases)) {
+    down_list <- setNames(list(down_list), comparison_name)
+  }
+  
+  up_names <- names(up_list); if (is.null(up_names)) up_names <- character(0)
+  dn_names <- names(down_list); if (is.null(dn_names)) dn_names <- character(0)
+  
+  #KEY CHANGE: UNION to avoid loosing UP-only or DOWN-only comparisons
+  comparisons <- union(up_names, dn_names)
+  
+  #if both are totally unnamed at comparison level, the only safe rule is index pairing.
+  if (length(comparisons) == 0) {
+    n <- max(length(up_list), length(down_list))
+    if (n == 0) stop("Empty `up_list` and `down_list`.")
+    
+    if (warn) warning("Both `up_list` and `down_list` are unnamed: pairing comparisons by index.")
+    
+    comparisons <- paste0("comparison", seq_len(n))
+    out <- setNames(vector("list", n), comparisons)
+    
+    for (i in seq_len(n)) {
+      comp <- comparisons[i]
+      up_comp <- if (i <= length(up_list)) up_list[[i]] else NULL
+      dn_comp <- if (i <= length(down_list)) down_list[[i]] else NULL
+      
+      comp_list <- list()
+      for (db in databases) {
+        up_df <- extract_df(if (!is.null(up_comp)) up_comp[[db]] else NULL, comp, db, "UP")
+        if (!is.null(up_df)) comp_list[[paste0(db, "_UP")]] <- up_df
+        
+        dn_df <- extract_df(if (!is.null(dn_comp)) dn_comp[[db]] else NULL, comp, db, "Down")
+        if (!is.null(dn_df)) comp_list[[paste0(db, "_Down")]] <- dn_df
+      }
+      
+      if (!keep_empty) comp_list <- comp_list[vapply(comp_list, nrow, integer(1)) > 0]
+      out[[comp]] <- comp_list
+    }
+    
+    return(out)
+  }
+  
+  out <- setNames(vector("list", length(comparisons)), comparisons)
+  
   for (comp in comparisons) {
     up_comp <- up_list[[comp]]
-    down_comp <- down_list[[comp]]
-
+    dn_comp <- down_list[[comp]]
+    
+    if (is.null(up_comp) && warn) warning("Comparison '", comp, "' missing in `up_list`")
+    if (is.null(dn_comp) && warn) warning("Comparison '", comp, "' missing in `down_list`")
+    
     comp_list <- list()
-
-    #loop over each database for up-regulated results
+    
     for (db in databases) {
-      # Extract the result, convert to data frame, and name with "_UP"
-      comp_list[[paste0(db, "_UP")]] <- as.data.frame(up_comp[[db]]$data)
+      up_df <- extract_df(if (!is.null(up_comp)) up_comp[[db]] else NULL, comp, db, "UP")
+      if (!is.null(up_df)) comp_list[[paste0(db, "_UP")]] <- up_df
+      
+      dn_df <- extract_df(if (!is.null(dn_comp)) dn_comp[[db]] else NULL, comp, db, "Down")
+      if (!is.null(dn_df)) comp_list[[paste0(db, "_Down")]] <- dn_df
     }
-    #loop over each database for down-regulated results
-    for (db in databases) {
-      #extract the result, convert to data frame, and name with "_Down"
-      comp_list[[paste0(db, "_Down")]] <- as.data.frame(down_comp[[db]]$data)
-    }
-    go_list[[comp]] <- comp_list
+    
+    if (!keep_empty) comp_list <- comp_list[vapply(comp_list, nrow, integer(1)) > 0]
+    out[[comp]] <- comp_list
   }
-
-  return(go_list)
+  
+  out
 }
+
 
 #' Combine and Prepare GO Analysis Results for Export
 #'
-#' This function takes a nested list of GO analysis results and, for each category, combines the contained data frames
-#' into a single data frame by row-binding them. A new column \code{Database} is added to indicate the source of each record.
-#' The resulting list is suitable for export to an Excel workbook (using packages like \code{writexl}), where each element becomes a separate sheet.
+#' This function takes a nested list of GO analysis results and, for each comparison/category,
+#' combines the contained data frames into a single data frame by row-binding them.
+#' A new column \code{Database} is added (from the names of the nested list elements) to indicate
+#' the source database and direction (e.g. \code{"GO_Biological_Process_2025_UP"}).
 #'
-#' @param go_list A named list of GO analysis results. Each element of \code{go_list} should itself be a list of data frames,
-#'   each corresponding to a different database or comparison.
+#' Unlike earlier versions, this function does \strong{not} overwrite names with a fixed template.
+#' This makes it robust to missing databases (very common in GO analyses) and prevents silent mislabeling.
 #'
-#' @return A named list of data frames. Each data frame contains an additional column \code{Database} that indicates
-#'   the source of the data.
+#' @param go_list A named list of GO analysis results. Each element of \code{go_list} should itself be a named list
+#'   of data frames (or tibbles). Names should indicate database and direction (e.g. \code{"Reactome_Pathways_2024_Down"}).
 #'
-#' @details
-#' For each category in \code{go_list}, the function assigns standardized names to the nested data frames,
-#' then uses \code{dplyr::bind_rows} (within an \code{lapply} loop) to combine them into a single data frame.
-#' This approach avoids explicit loops and improves efficiency over more verbose iterative methods.
+#' @return A named list of data frames. Each data frame contains an additional column \code{Database} indicating
+#'   the source of each row (taken from the nested list names).
 #'
 #' @examples
 #' \dontrun{
-#'   # Assume go_list is a nested list of GO results from various comparisons:
-#'   combined_go_list <- prep_go_exp(go_list)
-#'
-#'   # Export to an Excel file where each list element becomes a separate sheet:
-#'   writexl::write_xlsx(combined_go_list, "GO_Analysis_Results.xlsx")
+#' combined_go_list <- prep_go_exp(go_list)
+#' writexl::write_xlsx(combined_go_list, "GO_Analysis_Results.xlsx")
 #' }
 #'
-#' @import dplyr
 #' @export
 prep_go_exp <- function(go_list) {
-  #standardized names for the nested list elements
-  new_names <- c("MSigDB_Hallmarks_UP", "GO_Biological_Process_2023_UP", "BioPlanet_2019_UP",
-                 "GO_Cellular_Component_2023_UP", "Reactome_Pathways_2024_UP",
-                 "MSigDB_Hallmarks_Down", "GO_Biological_Process_2023_Down", "BioPlanet_2019_Down",
-                 "GO_Cellular_Component_2023_Down", "Reactome_Pathways_2024_DOWN")
-
-  #use lapply to process each category in the GO list efficiently
+  
+  #dependency check
+  if (!requireNamespace("dplyr", quietly = TRUE)) {
+    stop("Package 'dplyr' is required for prep_go_exp(). Install it with: install.packages('dplyr')")
+  }
+  
+  if (!is.list(go_list) || is.null(names(go_list))) {
+    stop("`go_list` must be a named list (e.g., comparisons/categories as names).")
+  }
+  
+  #combined list
   combined_go_list <- lapply(go_list, function(sublist) {
-    #assign standardized names to the sublist
-    names(sublist) <- new_names[seq_along(sublist)]
-    #combine the data frames with an added 'Database' column
+    
+    if (!is.list(sublist)) {
+      return(data.frame())
+    }
+    
+    #if sublist has no names, create stable fallback names
+    if (is.null(names(sublist))) {
+      names(sublist) <- paste0("db", seq_along(sublist))
+    } else {
+      # Replace empty names with fallbacks (rare but happens)
+      empty <- which(is.na(names(sublist)) | names(sublist) == "")
+      if (length(empty) > 0) names(sublist)[empty] <- paste0("db", empty)
+    }
+    
+    #coerce each element to data.frame when possible
+    sublist <- lapply(sublist, function(x) {
+      if (is.null(x)) return(data.frame())
+      if (inherits(x, "tbl_df")) return(as.data.frame(x))
+      if (is.data.frame(x)) return(x)
+      data.frame()
+    })
+    
     dplyr::bind_rows(sublist, .id = "Database")
   })
-
+  
   return(combined_go_list)
 }

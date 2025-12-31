@@ -38,14 +38,20 @@ whiskyplot <- function(tmm, genes, metadata,
                        y_lab           = "log(TMM/TPM + 1)",
                        subtitle        = NULL,
                        caption         = NULL) {
+  #dependencies check
+  pkgs <- c("tibble","tidyr","dplyr","rstatix","ggplot2","ggpubr")
+  miss <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
+  if (length(miss)) stop("Missing packages: ", paste(miss, collapse = ", "))
   
+  #match arg
   test <- match.arg(test)
   
   #subset & long format
   tmm_sub <- tmm[rownames(tmm) %in% genes, , drop = FALSE]
   df_long <- as.data.frame(tmm_sub) |>
     tibble::rownames_to_column("Gene") |>
-    tidyr::pivot_longer(-Gene, names_to = "Sample", values_to = "Expression")
+    tidyr::pivot_longer(-Gene, names_to = "Sample", values_to = "Expression") |>
+    dplyr::mutate(Expression = log1p(Expression)) #log-transformation
   
   #metadata join
   if (!all(c(sample_col, group_col) %in% colnames(metadata))) {

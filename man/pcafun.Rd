@@ -10,45 +10,68 @@ pcafun(
   title,
   colby = "samples",
   shapekey = NULL,
+  shape_map = NULL,
   showLoadings = TRUE
 )
 }
 \arguments{
-\item{counts}{A numeric matrix or data frame containing count data (e.g., TMM or TPM values) with rows as features (e.g., genes)
-and columns as samples.}
+\item{counts}{A numeric matrix or data frame containing expression/count data (e.g., TMM, CPM, TPM),
+with rows as features (e.g., genes) and columns as samples.}
 
-\item{metadata}{A data frame containing sample metadata. The row names of \code{metadata} should correspond to the column names of \code{counts}.}
+\item{metadata}{A data frame containing sample metadata. Row names of \code{metadata} must correspond to
+the column names of \code{counts} (sample IDs). The function will reorder \code{metadata} to match \code{counts}.}
 
 \item{title}{A character string for the PCA plot title.}
 
-\item{colby}{A character string specifying the column name in \code{metadata} used to color the samples in the PCA plot.
+\item{colby}{A character string specifying the column name in \code{metadata} used to color samples in the PCA plot.
 Default is \code{"samples"}.}
 
-\item{shapekey}{An optional character string specifying the column name in \code{metadata} used to shape the points in the PCA plot.
-Default is \code{NULL}, meaning no special grouping by shape.}
+\item{shapekey}{Optional character string specifying the column name in \code{metadata} used to shape points in the PCA plot.
+Default is \code{NULL}, meaning no grouping by shape.}
 
-\item{showLoadings}{A logical value indicating whether to display the loadings on the PCA biplot.
-Default is \code{TRUE}.}
+\item{shape_map}{Optional named vector mapping levels of \code{shapekey} to point shape codes (integers).
+For example: \code{c("batch1" = 15, "batch2" = 17)}. Default is \code{NULL} (PCAtools chooses shapes automatically).}
+
+\item{showLoadings}{Logical indicating whether to display loadings on the PCA biplot. Default is \code{TRUE}.}
 }
 \value{
 A \code{ggplot} object representing the PCA biplot.
 }
 \description{
 This function performs Principal Component Analysis (PCA) on a count matrix and generates a biplot
-using \code{PCAtools}. It streamlines the workflow—especially for pathway-specific PCAs—by performing the analysis
-and plotting in one step.
+using \code{PCAtools}. It streamlines the workflow by computing the PCA and plotting in one step.
 }
 \details{
-This function leverages \code{PCAtools::pca} to compute the principal components and \code{PCAtools::biplot} to create the biplot.
-By providing customizable parameters for both color and shape aesthetics (via \code{colby} and \code{shapekey}), along with
-an option to toggle the display of loadings, this function enables users to quickly generate tailored PCA visualizations
-without manually calculating PCA and then plotting it separately.
+\strong{Important note on shapes:} In \code{PCAtools::biplot()}, the argument \code{shape} specifies the
+metadata column used to assign point shapes, while \code{shapekey} is an optional named vector mapping
+factor levels to specific shape codes. For backward compatibility with older usage patterns in this package,
+\code{pcafun()} uses \code{shapekey} to mean "the metadata column used for shapes", and exposes the optional
+mapping via \code{shape_map}.
+
+The function computes PCA with \code{PCAtools::pca} and then plots using \code{PCAtools::biplot}.
+It performs basic input validation:
+\itemize{
+\item Ensures \code{counts} has column names and \code{metadata} has row names.
+\item Reorders \code{metadata} rows to match \code{counts} columns.
+\item Checks that \code{colby} and (if provided) \code{shapekey} exist in \code{metadata}.
+}
 }
 \examples{
 \dontrun{
 # Assume counts is your count matrix and metadata contains corresponding sample information:
-pca_plot <- pcafun(counts, metadata, title = "Pathway-Specific PCA",
-                   colby = "treatment", shapekey = "batch", showLoadings = FALSE)
+p1 <- pcafun(counts, metadata,
+             title = "PCA",
+             colby = "treatment",
+             shapekey = "batch",
+             showLoadings = FALSE)
+
+# With explicit mapping of batch levels to shapes:
+p2 <- pcafun(counts, metadata,
+             title = "PCA",
+             colby = "treatment",
+             shapekey = "batch",
+             shape_map = c("batch1" = 15, "batch2" = 17, "batch3" = 8),
+             showLoadings = FALSE)
 }
 
 }

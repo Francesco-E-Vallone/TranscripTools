@@ -4,49 +4,67 @@
 \alias{select_stat_sign}
 \title{Select Statistically Significant Differentially Expressed Genes}
 \usage{
-select_stat_sign(dge_list, stat_sign, logFC_threshold = 1)
+select_stat_sign(
+  dge,
+  stat_sign,
+  p_threshold = 0.05,
+  logFC_threshold = 1,
+  keep_empty = FALSE
+)
 }
 \arguments{
-\item{dge_list}{A named list of data frames, each containing DGE results. Each data frame should have a numeric column
-for significance (e.g., p-value or adjusted p-value) and a \code{logFC} column indicating the log fold-change.}
+\item{dge}{A data frame of DE results or a list of data frames.
+Each data frame must contain:
+\itemize{
+\item a significance column (specified by \code{stat_sign})
+\item a \code{logFC} column (log fold-change)
+}}
 
-\item{stat_sign}{A character string specifying the name of the significance column (e.g., \code{"p.value"} or \code{"adj.P.Val"})
-used to determine statistical significance.}
+\item{stat_sign}{Character string. Name of the significance column
+(e.g., \code{"p.value"}, \code{"adj.P.Val"}, \code{"padj"}).}
 
-\item{logFC_threshold}{A numeric value specifying the threshold for the absolute log fold-change.
-Only genes with \code{logFC} greater than or equal to this threshold (or less than or equal to the negative
-of this threshold) will be retained. Default is \code{1}.}
+\item{p_threshold}{Numeric. Significance cutoff applied to \code{stat_sign}.
+Default is \code{0.05}.}
+
+\item{logFC_threshold}{Numeric. Absolute log fold-change cutoff.
+Genes are kept when \code{abs(logFC) >= logFC_threshold}. Default is \code{1}.}
+
+\item{keep_empty}{Logical. If \code{TRUE}, keeps empty filtered data frames in the output
+(useful when you want to preserve the full set of contrasts). If \code{FALSE} (default),
+drops empty results.}
 }
 \value{
-A named list of data frames, where each data frame contains only the statistically significant genes from
-the corresponding element in \code{dge_list}. Any element of \code{dge_list} that is empty or lacks the specified
-columns is skipped.
+If \code{dge} is a data frame, returns a filtered data frame.
+If \code{dge} is a list, returns a list of filtered data frames.
+Elements that are not data frames or that lack required columns are skipped with a warning.
 }
 \description{
-This function processes a named list of differential gene expression (DGE) data frames and filters each
-data frame to retain only those genes that are statistically significant based on a specified significance
-column and a log fold-change threshold. This is useful for selecting the most differentially expressed genes
-across multiple analyses.
+Filters differential expression (DE) results by statistical significance and
+absolute log fold-change. The input can be either:
+\itemize{
+\item a single data frame of DE results, or
+\item a named (or unnamed) list of DE result data frames (e.g. one per contrast).
+}
 }
 \details{
-The function loops over each element in \code{dge_list} and for each one:
+The function:
 \itemize{
-\item Checks if the data frame is empty; if so, it moves on to the next element.
-\item Verifies that both the significance column (given by \code{stat_sign}) and the \code{logFC} column are present.
-\item Filters the data frame to retain only those genes for which the significance value is less than 0.05 and
-the absolute value of \code{logFC} is greater than or equal to \code{logFC_threshold}.
+\item Removes rows with \code{NA} in either \code{stat_sign} or \code{logFC}.
+\item Filters rows with \code{dge[[stat_sign]] < p_threshold}.
+\item Filters rows with \code{abs(logFC) >= logFC_threshold}.
 }
 }
 \examples{
 \dontrun{
-# Example: Suppose you have a list of DGE results:
 dge_list <- list(
   condition1 = data.frame(p.value = runif(100), logFC = rnorm(100)),
   condition2 = data.frame(p.value = runif(100), logFC = rnorm(100))
 )
 
-# Filter the list using "p.value" as the significance column and a logFC threshold of 1
 filtered_list <- select_stat_sign(dge_list, stat_sign = "p.value", logFC_threshold = 1)
+
+# Single data.frame also works:
+filtered_df <- select_stat_sign(dge_list$condition1, stat_sign = "p.value", logFC_threshold = 1)
 }
 
 }
