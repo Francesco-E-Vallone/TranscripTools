@@ -1,0 +1,412 @@
+# TranscripTools — Practical analysis workflow
+
+TranscripTools is a small, pragmatic toolbox for bulk RNA-seq downstream
+work **when you have many comparisons**.
+
+It does **not** do differential expression.  
+It helps with the repetitive parts that happen *after* edgeR / limma /
+DESeq2: consistent filtering, quick plots, enrichment wrappers, and
+export.
+
+This guide is intentionally written as a **realistic usage workflow**
+(not toy-data tutorial).  
+You should be able to scan it and immediately know *which function is
+for what* and *where it fits*.
+
+------------------------------------------------------------------------
+
+## 1. Start from raw count files (optional) — `create_df()`
+
+If you begin from multiple raw count files (e.g., featureCounts-style
+outputs),
+[`create_df()`](https://francesco-e-vallone.github.io/TranscripTools/reference/create_df.md)
+can merge them into one count matrix-like data.frame.
+
+What it does (high level):
+
+- reads each file (expects a simple two-column structure: gene ID +
+  counts)
+- appends the counts column to a growing table
+- keeps only the `counts_*` columns in the final object
+- removes technical rows like `no_feature`, `ambiguous`, etc. if present
+
+``` r
+library(TranscripTools)
+
+# base object to start from (can be empty)
+raw_counts <- data.frame()
+
+# vector of raw count files (one per sample)
+files <- list.files(
+  path = "path/to/counts",
+  pattern = "\\.txt$",
+  full.names = TRUE
+)
+
+counts_df <- create_df(raw_counts, files)
+
+# from here you typically:
+# - set rownames to gene IDs if needed
+# - normalize outside TranscripTools (edgeR::calcNormFactors, CPM/TPM, etc.)
+```
+
+**Important:**
+[`create_df()`](https://francesco-e-vallone.github.io/TranscripTools/reference/create_df.md)
+is about **building the count table**.  
+Normalization (TMM/TPM/logCPM) is done in your main pipeline
+(edgeR/limma/DESeq2).
+
+------------------------------------------------------------------------
+
+## 2. What you usually have after DE is run
+
+Most of the package assumes you have:
+
+- `tmm`: normalized expression matrix (TMM / TPM / logCPM / similar),
+  genes × samples
+- `meta`: sample metadata (rownames = sample IDs)
+- `res`: a **named list** of DE results, one data.frame per contrast
+  (rownames = gene symbols)
+
+``` r
+# res  <- readRDS(".../DGE_results.rds")   # named list of data.frames
+# tmm  <- readRDS(".../TMM_counts.rds")    # genes x samples
+# meta <- readRDS(".../metadata.rds")      # rownames = samples (match colnames(tmm))
+```
+
+### 2.1 Optional: average technical/biological replicates — `average_cols()`
+
+If you have replicate samples and you want a **group-level matrix** (one
+column per group), use
+[`average_cols()`](https://francesco-e-vallone.github.io/TranscripTools/reference/average_cols.md).
+
+- Input: `tmm` (genes × samples) and `meta` with a column called
+  **`group`**
+- Output: a data.frame with genes × **groups**
+
+``` r
+tmm_avg <- average_cols(tmm, meta)
+
+# Now you can use tmm_avg for “one column per group” heatmaps / PCA
+pcafun(
+  counts   = tmm_avg,
+  metadata = data.frame(group = colnames(tmm_avg), row.names = colnames(tmm_avg)),
+  colby    = "group",
+  title    = "PCA on averaged groups"
+)
+```
+
+If you *don’t* want averaging, skip this and keep using the original
+`tmm`.
+
+------------------------------------------------------------------------
+
+## 3. Global structure first (PCA early) — `pcafun()`
+
+Before zooming into DE genes, I want to see:
+
+- does condition separate at all?
+- is batch dominating?
+- do I have obvious outliers?
+
+What you get back: a **ggplot object** (so you can store it, add layers,
+or save it).
+
+``` r
+pcafun(
+  counts   = tmm,
+  metadata = meta,
+  colby    = "condition",
+  shapekey = "batch",
+  title    = "Global PCA"
+)
+```
+
+This step is not “one and done”. It’s something you rerun after each
+refinement (DE genes, pathway genes, etc.).
+
+------------------------------------------------------------------------
+
+## 4. Make DE results consistent — `add_significance()`
+
+Standardize the output of all contrasts in the same way (so downstream
+steps behave consistently).
+
+What you get back: your same list of contrasts, but with a standardized
+`sign` column added.
+
+``` r
+res <- lapply(
+  res,
+  add_significance,
+  fdr_col   = "adj.P.Val",
+  logFC_col = "logFC"
+)
+```
+
+This adds a `sign` column (`Up`, `Down`, `NS`) using the thresholds you
+defined in the function.
+
+------------------------------------------------------------------------
+
+## 5. Quick per-contrast sanity checks — `volplot()`
+
+Volcano plots are fast diagnostics:
+
+``` r
+volplot(res[["NM_vs_NWT"]])
+```
+
+I use them to catch: - contrasts with basically no signal - weird
+distributions (e.g., batch-driven results) - “filtering will kill
+everything” situations
+
+------------------------------------------------------------------------
+
+## 6. Define the working gene set — `select_stat_sign()`
+
+Single contrast:
+
+What you get back: a filtered **data.frame** (same columns as the input
+DE table).
+
+``` r
+sig_df <- select_stat_sign(
+  res[["NM_vs_NWT"]],
+  stat_sign = "adj.P.Val",
+  logFC_threshold = 1
+)
+```
+
+Across many contrasts:
+
+``` r
+res_sign <- lapply(
+  res,
+  select_stat_sign,
+  stat_sign = "adj.P.Val",
+  logFC_threshold = 1
+)
+```
+
+At this point, `sig_df` / `res_sign[[...]]` is the typical input for: -
+GO analysis - DE-gene heatmaps - DE-gene PCA - gene-level plots
+
+------------------------------------------------------------------------
+
+## 7. Go back to structure using DE genes — `pcafun()` + `hmap()`
+
+This is where analysis becomes *iterative*, not linear.
+
+### 7.1 PCA on DE genes
+
+What you get back: a **ggplot object** (so you can store it, add layers,
+or save it).
+
+``` r
+pcafun(
+  counts   = tmm[rownames(sig_df), ],
+  metadata = meta,
+  colby    = "condition",
+  shapekey = "batch",
+  title    = "PCA on DE genes"
+)
+```
+
+### 7.2 Heatmap on DE genes
+
+``` r
+hmap(
+  tmm,
+  title = "DE genes — NM vs NWT",
+  deg   = rownames(sig_df),
+  metadata     = meta,
+  metadata_col = "condition"
+)
+```
+
+------------------------------------------------------------------------
+
+## 8. Enrichment (UP / DOWN) — `up_go()` and `down_go()`
+
+What you get back: a **named list of ggplot objects**, one per database.
+Missing/empty databases are simply skipped (you might see warnings;
+that’s normal in real data).
+
+At this stage the question becomes: *what biology is driving the
+signal?*
+
+``` r
+up_go_res   <- up_go(sig_df,   samples = "NM_vs_NWT")
+down_go_res <- down_go(sig_df, samples = "NM_vs_NWT")
+```
+
+Across many contrasts (typical loop):
+
+``` r
+all_up_go   <- list()
+all_down_go <- list()
+
+for (nm in names(res_sign)) {
+  df <- res_sign[[nm]]
+  if (nrow(df) == 0) next
+
+  if (any(df$sign == "Up")) {
+    all_up_go[[nm]] <- up_go(df, samples = nm)
+  }
+
+  if (any(df$sign == "Down")) {
+    all_down_go[[nm]] <- down_go(df, samples = nm)
+  }
+}
+```
+
+------------------------------------------------------------------------
+
+## 9. Inspect & save enrichment plots — `enrichPlot()` + `save_plot()`
+
+Quick visualization:
+
+``` r
+enrichPlot(up_go_res)
+```
+
+Save consistently:
+
+``` r
+save_plot(
+  enrichPlot(up_go_res),
+  filename = "NM_vs_NWT_UP_GO"
+)
+```
+
+------------------------------------------------------------------------
+
+## 10. Pathway → genes → back into PCA/heatmap — `deg_in_pathway()`
+
+This is one of the main reasons TranscripTools exists: **closing the
+loop**.
+
+``` r
+deg_path <- deg_in_pathway(
+  deg_df  = sig_df,
+  pathway = "NF-kB signaling"
+)
+```
+
+Now reuse that gene set:
+
+What you get back: a **ggplot object** (so you can store it, add layers,
+or save it).
+
+``` r
+pcafun(
+  counts   = tmm[deg_path$gene, ],
+  metadata = meta,
+  colby    = "condition",
+  shapekey = "batch",
+  title    = "PCA — NF-kB pathway genes"
+)
+
+hmap(
+  tmm,
+  title = "NF-kB pathway genes",
+  deg   = deg_path$gene,
+  metadata     = meta,
+  metadata_col = "condition"
+)
+```
+
+This is the pattern:  
+**Global → DE genes → pathway genes → structure again.**
+
+------------------------------------------------------------------------
+
+## 11. Gene-level visualization (exploration + reporting)
+
+### 11.1 Barplot for top DE genes — `deg_barplot()`
+
+``` r
+deg_barplot(
+  sig_df,
+  tmm,
+  title = "Top DE genes"
+)
+```
+
+### 11.2 Expression distributions — `whiskyplot()`
+
+What you get back: a **ggplot object**.
+
+Stats note (important):
+[`whiskyplot()`](https://francesco-e-vallone.github.io/TranscripTools/reference/whiskyplot.md)
+runs a **pairwise test per gene** (Wilcoxon or t-test via `rstatix`) and
+then annotates the plot with p-values. If you need the **actual
+statistics table** for reporting (group1/group2, p, p.adj, etc.), you
+currently have two options:
+
+1.  re-run the same `rstatix::pairwise_*_test()` on the long-format data
+    (you already have the recipe in the function), or
+2.  (better) we add a `return_stats = TRUE` option that returns
+    `list(plot = p, stats = stat_df)`.
+
+``` r
+whiskyplot(
+  tmm       = tmm,
+  genes     = c("MYC", "BCL2"),
+  metadata  = meta,
+  group_col = "condition"
+)
+```
+
+### 11.3 Quick summaries — `plot_genes_stats()`
+
+``` r
+plot_genes_stats(
+  tmm      = tmm,
+  genes    = c("MYC", "BCL2"),
+  metadata = meta
+)
+```
+
+------------------------------------------------------------------------
+
+## 12. Organizing outputs across many contrasts (exports)
+
+### 12.1 GO outputs: nested → export-ready
+
+``` r
+go_list <- build_go_list(
+  up_list   = all_up_go,
+  down_list = all_down_go
+)
+
+go_export <- prep_go_exp(go_list)
+
+# writexl::write_xlsx(go_export, "GO_tables.xlsx")
+```
+
+### 12.2 DE outputs: list → export-ready
+
+``` r
+deg_export <- prep_deg_export(res)
+
+# writexl::write_xlsx(deg_export, "DE_tables.xlsx")
+```
+
+------------------------------------------------------------------------
+
+## 13. Notes
+
+TranscripTools follows the way I actually work on bulk RNA-seq projects:
+
+- I sanity-check global structure early (PCA/outliers/batch).
+- I define a clean DEG set, then refine it (DE → pathway → genes).
+- I keep looping between “global” and “focused” views instead of
+  pretending analysis is linear.
+- I export results in a consistent way, because comparisons pile up
+  fast.
+
+If you’re doing a single contrast once, you can just write a script.  
+If you’re doing many contrasts across projects, this saves time and
+keeps the workflow readable.
