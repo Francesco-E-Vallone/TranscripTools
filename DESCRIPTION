@@ -1,32 +1,34 @@
 Package: TranscripTools
-Title: Streamlined RNA-seq Data Manipulation and Analysis
+Title: Streamlined RNA-Seq Data Manipulation and Analysis
 Version: 0.4.0
-Authors@R: 
+Authors@R:
     person("Francesco Edoardo Vallone", email = "francesco.edo.vallone@gmail.com", role = c("aut", "cre"))
-Description: TranscripTools provides lightweight helper functions for bulk RNA-seq workflows,
- built to speed up analyses that involve multiple differential expression
- comparisons. It includes utilities to filter and annotate DE results, generate
- common plots (volcano, heatmap, PCA), run enrichment analysis wrappers, and
- export nested results to analysis-ready tables for reporting.
+Description: Provides lightweight helper functions for bulk RNA-seq workflows,
+    built to speed up analyses that involve multiple differential expression
+    comparisons. Includes utilities to filter and annotate DE results, generate
+    common plots (volcano, heatmap, PCA), run enrichment analysis wrappers, and
+    export nested results to analysis-ready tables for reporting.
 License: MIT + file LICENSE
+URL: https://francesco-e-vallone.github.io/TranscripTools/
 Encoding: UTF-8
 Imports:
     ggplot2,
-    ComplexHeatmap,
     dplyr,
     tidyr,
+    svglite,
     reshape2,
     ggrepel,
     enrichR,
-    svglite,
     ggpubr,
     tibble,
     rlang,
     rstatix
 Suggests:
+    ComplexHeatmap,
+    PCAtools,
     roxygen2,
     knitr,
-    PCAtools,
     rmarkdown
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
+VignetteBuilder: knitr

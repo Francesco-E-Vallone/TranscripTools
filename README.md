@@ -21,25 +21,36 @@ TranscripTools is under active development; while it was built around personal w
 ## Installation
 
 ```r
-#Install devtools if needed
+# Install devtools if needed
 if (!requireNamespace("devtools", quietly = TRUE)) install.packages("devtools")
 
-#Install TranscripTools from GitHub
+# Install TranscripTools from GitHub
 devtools::install_github("Francesco-E-Vallone/TranscripTools")
 
-#Load the package
+# Load the package
 library(TranscripTools)
 
-#Optional: PCA plotting requires PCAtools (Bioconductor)
+# Optional (Bioconductor):
+# - PCA plotting: PCAtools
+# - Heatmaps: ComplexHeatmap
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
-BiocManager::install("PCAtools")
-```
+BiocManager::install(c("PCAtools", "ComplexHeatmap"))
 
 # Documentation
 
 Function reference and examples are available via the pkgdown site:
 
 <https://francesco-e-vallone.github.io/TranscripTools/>
+
+
+## Workflow example (minimal)
+
+If you want to see how the functions in TranscripTools fit together, start from this **minimal workflow**.
+
+It’s written as a practical “how I run it” guide (no toy dataset included): it walks through a typical bulk RNA-seq downstream loop with multiple contrasts; from DE results to PCA, DEG filtering, enrichment/pathway steps, focused gene exploration, visualization, and export.
+
+ **Practical analysis workflow (minimal)**  
+https://francesco-e-vallone.github.io/TranscripTools/articles/transcriptools-workflow.html
 
 # Collaboration
 

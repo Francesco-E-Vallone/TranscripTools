@@ -57,3 +57,5 @@ po/*~
 rsconnect/
 >>>>>>> f035179a645350c983c5609a06b122487dbe6983
 docs
+/doc/
+/Meta/

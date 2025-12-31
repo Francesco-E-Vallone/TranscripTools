@@ -1,5 +1,9 @@
 pandoc: 3.6.3
 pkgdown: 2.2.0
 pkgdown_sha: ~
-articles: {}
-last_built: 2025-12-31T14:47Z
+articles:
+  TranscripTools_workflow: TranscripTools_workflow.html
+last_built: 2025-12-31T19:34Z
+urls:
+  reference: https://francesco-e-vallone.github.io/TranscripTools/reference
+  article: https://francesco-e-vallone.github.io/TranscripTools/articles
