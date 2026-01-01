@@ -4,7 +4,7 @@ on:
     branches: [main, master]
   pull_request:
 
-name: R-CMD-check
+name: R-CMD-check.yaml
 
 permissions: read-all
 
@@ -17,11 +17,11 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macos-latest,   r: 'release'}
-          - {os: windows-latest, r: 'release'}
-          - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}
-          - {os: ubuntu-latest,  r: 'release'}
-          - {os: ubuntu-latest,  r: 'oldrel-1'}
+          - {os: macos-latest,   r: "release"}
+          - {os: windows-latest, r: "release"}
+          - {os: ubuntu-latest,  r: "devel", http-user-agent: "release"}
+          - {os: ubuntu-latest,  r: "release"}
+          - {os: ubuntu-latest,  r: "oldrel-1"}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -30,6 +30,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
 
       - uses: r-lib/actions/setup-r@v2
         with:
@@ -40,12 +42,17 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           needs: check
-          extra-packages: any::rcmdcheck
+          # IMPORTANT: this must be an R string, not a bare word
+          # "hard" = Depends/Imports/LinkingTo only (NO Suggests)
+          dependencies: '"hard"'
+          extra-packages: |
+            any::rcmdcheck
+            any::knitr
+            any::rmarkdown
 
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
-          # Avoid pandoc/latex/vignettes on CI; your pkgdown build is separate
-          build_args: 'c("--no-manual","--no-build-vignettes")'
+          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
         env:
           _R_CHECK_FORCE_SUGGESTS_: false
