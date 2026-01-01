@@ -201,9 +201,18 @@ down_go <- function(df, samples,
 #' }
 #'
 #' @import ggplot2
-#' @import svglite
 #' @export
 save_plot <- function(plot_list, list_name, path = "results/", device = "svg", height = 7, width = 15) {
+  #checking for svglite dependency
+  if (device == "svg") {
+    if (!requireNamespace("svglite", quietly = TRUE)) {
+      stop("To save as SVG you need 'svglite'. Install it with install.packages('svglite').")
+    }
+    svglite::svglite(file)
+    print(p)
+    grDevices::dev.off()
+  }
+  
   #check if dir exists
   if (!dir.exists(path)) dir.create(path, recursive = TRUE)
   

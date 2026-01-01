@@ -15,7 +15,6 @@ Imports:
     ggplot2,
     dplyr,
     tidyr,
-    svglite,
     reshape2,
     ggrepel,
     enrichR,
@@ -26,6 +25,7 @@ Imports:
 Suggests:
     ComplexHeatmap,
     PCAtools,
+    svglite,
     roxygen2,
     knitr,
     rmarkdown
