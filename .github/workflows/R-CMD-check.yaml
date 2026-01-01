@@ -39,13 +39,14 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
-      # Install only hard deps (Imports) + minimal check tooling.
-      # IMPORTANT: dependencies is an R expression string, hence the nested quotes.
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           needs: check
-          dependencies: '"Imports"'
-          extra-packages: any::rcmdcheck
+          dependencies: hard
+          extra-packages: |
+            any::rcmdcheck
+            any::knitr
+            any::rmarkdown
 
       - uses: r-lib/actions/check-r-package@v2
         with:
