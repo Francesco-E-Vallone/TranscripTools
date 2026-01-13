@@ -1,5 +1,16 @@
 # Changelog
 
+## TranscripTools 0.4.3
+
+- Fix
+  [`hmap()`](https://francesco-e-vallone.github.io/TranscripTools/reference/hmap.md)
+  crash when ComplexHeatmap expects `gpar()` (row/column name gp now
+  always valid).
+- Improve top-annotation color mapping: missing levels are filled with
+  `grey80` with a warning instead of erroring.
+- Add optional control of row/column name font size and font face via
+  `*_names_gp`.
+
 ## TranscripTools 0.4.2
 
 - hmap(): fix annotation_colors/gpar error; add optional row/col name
