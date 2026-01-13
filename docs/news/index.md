@@ -1,5 +1,9 @@
 # Changelog
 
+## TranscripTools 0.4.1
+
+- hmap(): added row/column name font size + font face options.
+
 ## TranscripTools 0.4.0
 
 - pcafun: fixed shape handling (shapekey = metadata column; optional

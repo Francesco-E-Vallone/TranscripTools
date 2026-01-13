@@ -1,6 +1,6 @@
 Package: TranscripTools
 Title: Streamlined RNA-Seq Data Manipulation and Analysis
-Version: 0.4.0
+Version: 0.4.1
 Authors@R:
     person("Francesco Edoardo Vallone", email = "francesco.edo.vallone@gmail.com", role = c("aut", "cre"))
 Description: Provides lightweight helper functions for bulk RNA-seq workflows,
