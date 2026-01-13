@@ -85,3 +85,9 @@ hmap(
 A
 [`ComplexHeatmap::Heatmap`](https://rdrr.io/pkg/ComplexHeatmap/man/Heatmap.html)
 object (drawn and returned).
+
+## Details
+
+If `annotation_colors` is provided but does not cover all annotation
+levels, missing levels are filled with `"grey80"` and a warning is
+emitted.

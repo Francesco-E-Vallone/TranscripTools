@@ -56,3 +56,7 @@ with the option to restrict the visualization to a set of differentially express
 It supports a top annotation built from sample metadata and lets you control whether row/column
 names are shown, plus their font size and font face (via ComplexHeatmap's \code{*_names_gp}).
 }
+\details{
+If \code{annotation_colors} is provided but does not cover all annotation levels,
+missing levels are filled with \code{"grey80"} and a warning is emitted.
+}

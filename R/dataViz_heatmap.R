@@ -5,6 +5,9 @@
 #' It supports a top annotation built from sample metadata and lets you control whether row/column
 #' names are shown, plus their font size and font face (via ComplexHeatmap's \code{*_names_gp}).
 #'
+#' If \code{annotation_colors} is provided but does not cover all annotation levels,
+#' missing levels are filled with \code{"grey80"} and a warning is emitted.
+#'
 #' @param tmm Numeric matrix or data.frame (rows = genes, cols = samples).
 #' @param title Character. Heatmap title.
 #' @param deg Optional character vector of genes to include (must match \code{rownames(tmm)}).
@@ -36,66 +39,87 @@ hmap <- function(tmm,
                  row_names_fontface = NULL,
                  column_names_fontsize = NULL,
                  column_names_fontface = NULL) {
-
-  #dependency check (ComplexHeatmap is in Suggests in your setup)
+  
+  # ---- dependency ----
   if (!requireNamespace("ComplexHeatmap", quietly = TRUE)) {
     stop(
       "Package 'ComplexHeatmap' is required for hmap(). ",
       "Install it with: BiocManager::install('ComplexHeatmap')"
     )
   }
-
-  #input checks
+  
+  # ---- input checks / coercion ----
   if (is.data.frame(tmm)) tmm <- as.matrix(tmm)
-
+  
+  if (!is.matrix(tmm)) {
+    stop("`tmm` must be a matrix or data.frame coercible to a matrix.")
+  }
+  
+  # subset to DEGs if provided
   if (!is.null(deg)) {
     tmm <- tmm[rownames(tmm) %in% deg, , drop = FALSE]
   }
-
-  if (!is.matrix(tmm)) {
-    stop("`tmm` must be a matrix or data.frame coercible to a numeric matrix.")
-  }
+  
   if (nrow(tmm) == 0) stop("`tmm` has 0 rows after filtering (check `deg`).")
   if (ncol(tmm) == 0) stop("`tmm` has 0 columns (no samples).")
-
-  #z-scores per row (gene)
+  
+  # ---- z-score per gene (row) ----
   zfun <- function(x) {
     sx <- stats::sd(x, na.rm = TRUE)
     if (is.na(sx) || sx == 0) rep(0, length(x)) else (x - mean(x, na.rm = TRUE)) / sx
   }
   tmm_z <- t(apply(tmm, 1, zfun))
-
-  #build top annotation if requested
+  
+  # ---- top annotation (optional) ----
   topAnn <- NULL
   if (!is.null(metadata) && !is.null(metadata_col)) {
-
+    
     if (!is.data.frame(metadata)) stop("`metadata` must be a data.frame.")
     if (is.null(rownames(metadata))) stop("`metadata` must have rownames = sample IDs.")
     if (!(metadata_col %in% colnames(metadata))) {
       stop("`metadata_col` not found in metadata: ", metadata_col)
     }
-
-    #align metadata to heatmap columns
+    
+    # align metadata to heatmap columns
     missing_meta <- setdiff(colnames(tmm_z), rownames(metadata))
     if (length(missing_meta) > 0) {
       stop("`metadata` is missing these samples: ", paste(missing_meta, collapse = ", "))
     }
     metadata <- metadata[colnames(tmm_z), , drop = FALSE]
-
+    
     ann_df <- data.frame(group = metadata[[metadata_col]])
     rownames(ann_df) <- colnames(tmm_z)
-
+    
     if (!is.null(annotation_colors)) {
+      # make sure we have colors for all levels (warn + fill)
+      levs <- unique(as.character(ann_df$group))
+      missing_cols <- setdiff(levs, names(annotation_colors))
+      
+      if (length(missing_cols) > 0) {
+        warning(
+          "`annotation_colors` missing colors for: ",
+          paste(missing_cols, collapse = ", "),
+          ". Using 'grey80' for missing levels."
+        )
+        annotation_colors <- c(
+          annotation_colors,
+          stats::setNames(rep("grey80", length(missing_cols)), missing_cols)
+        )
+      }
+      
+      # keep legend clean: only levels actually present
+      annotation_colors <- annotation_colors[levs]
+      
       topAnn <- ComplexHeatmap::HeatmapAnnotation(
-        df = ann_df,
+        df  = ann_df,
         col = list(group = annotation_colors)
       )
     } else {
       topAnn <- ComplexHeatmap::HeatmapAnnotation(df = ann_df)
     }
   }
-
-  #build row/column name gpar only if user provided something
+  
+  # ---- row/column name graphical params (optional) ----
   row_gp <- NULL
   if (!is.null(row_names_fontsize) || !is.null(row_names_fontface)) {
     gp_args <- list()
@@ -103,7 +127,7 @@ hmap <- function(tmm,
     if (!is.null(row_names_fontface)) gp_args$fontface <- row_names_fontface
     row_gp <- do.call(grid::gpar, gp_args)
   }
-
+  
   col_gp <- NULL
   if (!is.null(column_names_fontsize) || !is.null(column_names_fontface)) {
     gp_args <- list()
@@ -111,22 +135,25 @@ hmap <- function(tmm,
     if (!is.null(column_names_fontface)) gp_args$fontface <- column_names_fontface
     col_gp <- do.call(grid::gpar, gp_args)
   }
-
-  #heatmap
-  ht <- ComplexHeatmap::Heatmap(
-    tmm_z,
-    name = "Z.score",
-    col = heatmap_colors,
-    show_row_names = show_row_names,
-    show_column_names = show_column_names,
-    row_names_gp = row_gp,
-    column_names_gp = col_gp,
-    show_row_dend = FALSE,
-    border = TRUE,
-    top_annotation = topAnn,
-    column_title = title
+  
+  # ---- build Heatmap call (IMPORTANT: don't pass *_gp when NULL) ----
+  hm_args <- list(
+    matrix             = tmm_z,
+    name               = "Z.score",
+    col                = heatmap_colors,
+    show_row_names     = show_row_names,
+    show_column_names  = show_column_names,
+    show_row_dend      = FALSE,
+    border             = TRUE,
+    column_title       = title
   )
-
+  
+  if (!is.null(topAnn)) hm_args$top_annotation <- topAnn
+  if (!is.null(row_gp)) hm_args$row_names_gp <- row_gp
+  if (!is.null(col_gp)) hm_args$column_names_gp <- col_gp
+  
+  ht <- do.call(ComplexHeatmap::Heatmap, hm_args)
+  
   ComplexHeatmap::draw(ht)
   return(ht)
 }
