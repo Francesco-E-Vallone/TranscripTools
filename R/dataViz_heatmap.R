@@ -40,7 +40,7 @@ hmap <- function(tmm,
                  column_names_fontsize = NULL,
                  column_names_fontface = NULL) {
   
-  # ---- dependency ----
+  #dependency check
   if (!requireNamespace("ComplexHeatmap", quietly = TRUE)) {
     stop(
       "Package 'ComplexHeatmap' is required for hmap(). ",
@@ -48,14 +48,14 @@ hmap <- function(tmm,
     )
   }
   
-  # ---- input checks / coercion ----
+  #input checks
   if (is.data.frame(tmm)) tmm <- as.matrix(tmm)
   
   if (!is.matrix(tmm)) {
     stop("`tmm` must be a matrix or data.frame coercible to a matrix.")
   }
   
-  # subset to DEGs if provided
+  #subset to DEGs if provided
   if (!is.null(deg)) {
     tmm <- tmm[rownames(tmm) %in% deg, , drop = FALSE]
   }
@@ -63,14 +63,14 @@ hmap <- function(tmm,
   if (nrow(tmm) == 0) stop("`tmm` has 0 rows after filtering (check `deg`).")
   if (ncol(tmm) == 0) stop("`tmm` has 0 columns (no samples).")
   
-  # ---- z-score per gene (row) ----
+  #z-score per gene (row)
   zfun <- function(x) {
     sx <- stats::sd(x, na.rm = TRUE)
     if (is.na(sx) || sx == 0) rep(0, length(x)) else (x - mean(x, na.rm = TRUE)) / sx
   }
   tmm_z <- t(apply(tmm, 1, zfun))
   
-  # ---- top annotation (optional) ----
+  #top annotation (optional)
   topAnn <- NULL
   if (!is.null(metadata) && !is.null(metadata_col)) {
     
@@ -80,7 +80,7 @@ hmap <- function(tmm,
       stop("`metadata_col` not found in metadata: ", metadata_col)
     }
     
-    # align metadata to heatmap columns
+    #align metadata to heatmap columns
     missing_meta <- setdiff(colnames(tmm_z), rownames(metadata))
     if (length(missing_meta) > 0) {
       stop("`metadata` is missing these samples: ", paste(missing_meta, collapse = ", "))
@@ -91,7 +91,6 @@ hmap <- function(tmm,
     rownames(ann_df) <- colnames(tmm_z)
     
     if (!is.null(annotation_colors)) {
-      # make sure we have colors for all levels (warn + fill)
       levs <- unique(as.character(ann_df$group))
       missing_cols <- setdiff(levs, names(annotation_colors))
       
@@ -107,8 +106,8 @@ hmap <- function(tmm,
         )
       }
       
-      # keep legend clean: only levels actually present
-      annotation_colors <- annotation_colors[levs]
+      #keep only levels present
+      annotation_colors <- annotation_colors[unique(as.character(ann_df$group))]
       
       topAnn <- ComplexHeatmap::HeatmapAnnotation(
         df  = ann_df,
@@ -119,7 +118,7 @@ hmap <- function(tmm,
     }
   }
   
-  # ---- row/column name graphical params (optional) ----
+  #row/column name graphical params (optional)
   row_gp <- NULL
   if (!is.null(row_names_fontsize) || !is.null(row_names_fontface)) {
     gp_args <- list()
@@ -136,16 +135,16 @@ hmap <- function(tmm,
     col_gp <- do.call(grid::gpar, gp_args)
   }
   
-  # ---- build Heatmap call (IMPORTANT: don't pass *_gp when NULL) ----
+  #build Heatmap call (CRITICAL: don't pass *_gp when NULL)
   hm_args <- list(
-    matrix             = tmm_z,
-    name               = "Z.score",
-    col                = heatmap_colors,
-    show_row_names     = show_row_names,
-    show_column_names  = show_column_names,
-    show_row_dend      = FALSE,
-    border             = TRUE,
-    column_title       = title
+    matrix            = tmm_z,
+    name              = "Z.score",
+    col               = heatmap_colors,
+    show_row_names    = show_row_names,
+    show_column_names = show_column_names,
+    show_row_dend     = FALSE,
+    border            = TRUE,
+    column_title      = title
   )
   
   if (!is.null(topAnn)) hm_args$top_annotation <- topAnn
