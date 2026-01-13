@@ -52,7 +52,7 @@ BiocManager::install(c("PCAtools", "ComplexHeatmap"))
 Function reference and examples are available via the pkgdown site:
 
 [TranscripTools
-documentation](https://francesco-e-vallone.github.io/TranscripTools/reference/index.html?v=0.4.2)
+documentation](https://francesco-e-vallone.github.io/TranscripTools/reference/index.html?v=0.4.3)
 
 ## Workflow example (minimal)
 
@@ -66,7 +66,7 @@ enrichment/pathway steps, focused gene exploration, visualization, and
 export.
 
 [Practical analysis workflow
-(minimal)](https://francesco-e-vallone.github.io/TranscripTools/articles/TranscripTools_workflow.html?v=0.4.2)
+(minimal)](https://francesco-e-vallone.github.io/TranscripTools/articles/TranscripTools_workflow.html?v=0.4.3)
 
 ## Collaboration
 
