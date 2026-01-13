@@ -1,3 +1,6 @@
+# TranscripTools 0.4.2
+- hmap(): fix annotation_colors/gpar error; add optional row/col name font controls; warn+fill missing annotation colors
+
 # TranscripTools 0.4.1
 
 - hmap(): added row/column name font size + font face options.
